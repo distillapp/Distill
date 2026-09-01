@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Gist — Text Summarizer</title>
+<style>
+  :root{
+    --paper:#F7F5F0;
+    --ink:#26241F;
+    --ink-soft:#5B584F;
+    --rule:#DAD5C8;
+    --accent:#3D5A4A;
+    --accent-soft:#E6ECE7;
+    --card:#FFFFFF;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    background:var(--paper);
+    color:var(--ink);
+    font-family: Georgia, 'Iowan Old Style', 'Times New Roman', serif;
+    display:flex;
+    justify-content:center;
+    padding:56px 20px;
+  }
+  .wrap{ width:100%; max-width:680px; }
+
+  header{ margin-bottom:36px; }
+  .kicker{ font-family: -apple-system, Helvetica, Arial, sans-serif; font-size:13px; color:var(--ink-soft); letter-spacing:0.03em; margin-bottom:10px; }
+  h1{ font-size:38px; line-height:1.15; margin:0 0 12px 0; font-weight:400; }
+  h1 em{ font-style:italic; color:var(--accent); }
+  p.lede{ font-family:-apple-system, Helvetica, Arial, sans-serif; font-size:15px; color:var(--ink-soft); line-height:1.6; max-width:52ch; margin:0; }
+
+  .panel{
+    background:var(--card);
+    border:1px solid var(--rule);
+    border-radius:4px;
+    padding:24px;
+    margin-top:28px;
+  }
+  label{
+    display:block;
+    font-family:-apple-system, Helvetica, Arial, sans-serif;
+    font-size:13px;
+    color:var(--ink-soft);
+    margin-bottom:10px;
+  }
+  textarea{
+    width:100%;
+    min-height:180px;
+    resize:vertical;
+    border:1px solid var(--rule);
+    border-radius:3px;
+    padding:14px;
+    font-family: Georgia, serif;
+    font-size:15px;
+    line-height:1.6;
+    color:var(--ink);
+    background:var(--paper);
+  }
+  textarea:focus{ outline:2px solid var(--accent); outline-offset:1px; }
+
+  .controls{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    margin-top:16px;
+    flex-wrap:wrap;
+    gap:12px;
+  }
+  .slider-group{ display:flex; align-items:center; gap:10px; font-family:-apple-system, Helvetica, Arial, sans-serif; font-size:13px; color:var(--ink-soft); }
+  input[type=range]{ accent-color: var(--accent); width:120px; }
+
+  button{
+    font-family:-apple-system, Helvetica, Arial, sans-serif;
+    font-size:14px;
+    background:var(--ink);
+    color:var(--paper);
+    border:none;
+    padding:11px 22px;
+    border-radius:3px;
+    cursor:pointer;
+  }
+  button:hover{ background:var(--accent); }
+  button:disabled{ background:var(--rule); cursor:not-allowed; }
+
+  .result{
+    margin-top:26px;
+    padding-top:22px;
+    border-top:1px solid var(--rule);
+    display:none;
+  }
+  .result.show{ display:block; }
+  .result-label{ font-family:-apple-system, Helvetica, Arial, sans-serif; font-size:13px; color:var(--accent); margin-bottom:10px; }
+  .result-text{ font-size:16px; line-height:1.75; }
+  .stats{
+    margin-top:16px;
+    font-family:-apple-system, Helvetica, Arial, sans-serif;
+    font-size:12.5px;
+    color:var(--ink-soft);
+    display:flex;
+    gap:18px;
+  }
+
+  .note{
+    margin-top:32px;
+    font-family:-apple-system, Helvetica, Arial, sans-serif;
+    font-size:12.5px;
+    color:var(--ink-soft);
+    line-height:1.6;
+    border-left:2px solid var(--rule);
+    padding-left:14px;
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="kicker">PROTOTYPE</div>
+    <h1>Read less.<br><em>Understand</em> more.</h1>
+    <p class="lede">Paste any article, essay, or set of notes below. This pulls out the sentences that carry the most meaning — the same core idea behind tools people pay for.</p>
+  </header>
+
+  <div class="panel">
+    <label for="input">YOUR TEXT</label>
+    <textarea id="input" placeholder="Paste a paragraph or two here...">Python is one of the most popular programming languages in the world today. It was created by Guido van Rossum and first released in 1991. Python is known for its simple, readable syntax that makes it a great first language for beginners. It is used in web development, data science, artificial intelligence, automation, and game development. Many large companies including Google, Netflix, and Instagram use Python in their technology stack. The Python community is large and active, with millions of free libraries available to solve almost any problem. Because it is beginner friendly, many schools and colleges teach Python as an introductory programming language. Learning Python well can open doors to careers in software engineering, data analysis, and machine learning.</textarea>
+
+    <div class="controls">
+      <div class="slider-group">
+        <span>Sentences:</span>
+        <input type="range" id="count" min="1" max="6" value="3">
+        <span id="countVal">3</span>
+      </div>
+      <button id="go">Summarize</button>
+    </div>
+
+    <div class="result" id="result">
+      <div class="result-label">SUMMARY</div>
+      <div class="result-text" id="output"></div>
+      <div class="stats" id="stats"></div>
+    </div>
+  </div>
+
+  <div class="note">
+    This runs entirely in your browser — the same scoring logic (word-frequency based extraction) as the Python version. A real product would add: PDF upload, longer-document handling, and a paid tier for unlimited use.
+  </div>
+</div>
+
+<script>
+const STOPWORDS = new Set("a an the is are was were be been being of in on at to for with and or but if then so as by from this that these those it its he she they we you i not no yes do does did have has had will would can could should may might".split(" "));
+
+function splitSentences(text){
+  return text.trim().split(/(?<=[.!?])\s+/).map(s => s.trim()).filter(Boolean);
+}
+
+function summarize(text, n){
+  const sentences = splitSentences(text);
+  if(sentences.length <= n) return { summary: text, total: sentences.length, kept: sentences.length };
+
+  const words = (text.toLowerCase().match(/\w+/g) || []).filter(w => !STOPWORDS.has(w) && w.length > 2);
+  const freq = {};
+  words.forEach(w => freq[w] = (freq[w]||0) + 1);
+  const max = Math.max(...Object.values(freq), 1);
+  Object.keys(freq).forEach(w => freq[w] = freq[w] / max);
+
+  const scored = sentences.map(s => {
+    const w = (s.toLowerCase().match(/\w+/g) || []);
+    const score = w.length ? w.reduce((sum, word) => sum + (freq[word]||0), 0) / w.length : 0;
+    return { sentence: s, score };
+  });
+
+  const top = [...scored].sort((a,b) => b.score - a.score).slice(0, n).map(x => x.sentence);
+  const ordered = sentences.filter(s => top.includes(s));
+
+  return { summary: ordered.join(" "), total: sentences.length, kept: ordered.length };
+}
+
+const countSlider = document.getElementById('count');
+const countVal = document.getElementById('countVal');
+countSlider.addEventListener('input', () => countVal.textContent = countSlider.value);
+
+document.getElementById('go').addEventListener('click', () => {
+  const text = document.getElementById('input').value;
+  if(!text.trim()) return;
+  const n = parseInt(countSlider.value, 10);
+  const { summary, total, kept } = summarize(text, n);
+
+  document.getElementById('output').textContent = summary;
+  document.getElementById('stats').innerHTML =
+    `<span>${total} sentences → ${kept}</span><span>${text.split(/\s+/).length} words in original</span>`;
+  document.getElementById('result').classList.add('show');
+});
+</script>
+</body>
+</html>
