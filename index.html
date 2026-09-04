@@ -2,148 +2,274 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Gist — Text Summarizer</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Distill — the essence of any text</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;1,9..144,500&family=Work+Sans:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
   :root{
-    --paper:#F7F5F0;
-    --ink:#26241F;
-    --ink-soft:#5B584F;
-    --rule:#DAD5C8;
-    --accent:#3D5A4A;
-    --accent-soft:#E6ECE7;
-    --card:#FFFFFF;
+    --bg-deep:#0F211A;
+    --bg-panel:#16281F;
+    --bg-panel-2:#1B3327;
+    --line:#2A4436;
+    --line-soft:#213A2C;
+    --ink:#EFEADC;
+    --ink-soft:#96AC9E;
+    --ink-faint:#5C7166;
+    --copper:#C98A4B;
+    --copper-soft:#8E6134;
+    --vapor:#D7E8DD;
+    --fade:#3A4E42;
   }
   *{box-sizing:border-box;}
+  html{ scroll-behavior:smooth; }
   body{
     margin:0;
-    background:var(--paper);
+    background:var(--bg-deep);
     color:var(--ink);
-    font-family: Georgia, 'Iowan Old Style', 'Times New Roman', serif;
-    display:flex;
-    justify-content:center;
-    padding:56px 20px;
+    font-family:'Work Sans', -apple-system, sans-serif;
+    -webkit-font-smoothing:antialiased;
   }
-  .wrap{ width:100%; max-width:680px; }
 
-  header{ margin-bottom:36px; }
-  .kicker{ font-family: -apple-system, Helvetica, Arial, sans-serif; font-size:13px; color:var(--ink-soft); letter-spacing:0.03em; margin-bottom:10px; }
-  h1{ font-size:38px; line-height:1.15; margin:0 0 12px 0; font-weight:400; }
-  h1 em{ font-style:italic; color:var(--accent); }
-  p.lede{ font-family:-apple-system, Helvetica, Arial, sans-serif; font-size:15px; color:var(--ink-soft); line-height:1.6; max-width:52ch; margin:0; }
-
-  .panel{
-    background:var(--card);
-    border:1px solid var(--rule);
-    border-radius:4px;
-    padding:24px;
-    margin-top:28px;
+  /* ambient background: a slow drifting vapor glow, one orchestrated moment */
+  .vapor-field{
+    position:fixed; inset:0; overflow:hidden; z-index:0; pointer-events:none;
   }
-  label{
-    display:block;
-    font-family:-apple-system, Helvetica, Arial, sans-serif;
-    font-size:13px;
+  .vapor-field span{
+    position:absolute;
+    border-radius:50%;
+    filter:blur(60px);
+    opacity:0.16;
+  }
+  .v1{ width:520px; height:520px; background:var(--copper); top:-180px; left:-120px; animation:drift1 26s ease-in-out infinite; }
+  .v2{ width:420px; height:420px; background:var(--vapor); bottom:-160px; right:-100px; animation:drift2 32s ease-in-out infinite; }
+  @keyframes drift1{ 0%,100%{ transform:translate(0,0); } 50%{ transform:translate(40px,60px); } }
+  @keyframes drift2{ 0%,100%{ transform:translate(0,0); } 50%{ transform:translate(-30px,-50px); } }
+
+  .wrap{ position:relative; z-index:1; max-width:720px; margin:0 auto; padding:72px 24px 100px; }
+
+  /* mark + wordmark */
+  .brand{ display:flex; align-items:center; gap:10px; margin-bottom:64px; }
+  .brand svg{ width:22px; height:22px; }
+  .brand span{ font-family:'Fraunces', serif; font-size:17px; letter-spacing:0.01em; color:var(--ink); }
+
+  header{ margin-bottom:48px; }
+  h1{
+    font-family:'Fraunces', serif;
+    font-weight:500;
+    font-size:44px;
+    line-height:1.18;
+    letter-spacing:-0.01em;
+    margin:0 0 20px 0;
+    max-width:15ch;
+    color:var(--ink);
+  }
+  p.lede{
+    font-size:16px;
+    line-height:1.65;
     color:var(--ink-soft);
-    margin-bottom:10px;
+    max-width:46ch;
+    margin:0;
   }
+
+  /* panel */
+  .panel{
+    background:var(--bg-panel);
+    border:1px solid var(--line-soft);
+    border-radius:6px;
+    padding:28px;
+  }
+  .field-label{
+    font-size:13px;
+    color:var(--ink-faint);
+    margin-bottom:10px;
+    display:flex;
+    justify-content:space-between;
+  }
+  .field-label .count{ color:var(--ink-faint); font-variant-numeric:tabular-nums; }
+
   textarea{
     width:100%;
-    min-height:180px;
+    min-height:190px;
     resize:vertical;
-    border:1px solid var(--rule);
-    border-radius:3px;
-    padding:14px;
-    font-family: Georgia, serif;
-    font-size:15px;
-    line-height:1.6;
+    background:var(--bg-deep);
+    border:1px solid var(--line);
+    border-radius:4px;
+    padding:16px;
     color:var(--ink);
-    background:var(--paper);
+    font-family:'Work Sans', sans-serif;
+    font-size:15px;
+    line-height:1.65;
   }
-  textarea:focus{ outline:2px solid var(--accent); outline-offset:1px; }
+  textarea::placeholder{ color:var(--ink-faint); }
+  textarea:focus{ outline:none; border-color:var(--copper-soft); }
+
+  .dropzone{
+    margin-top:10px;
+    border:1px dashed var(--line);
+    border-radius:4px;
+    padding:10px 14px;
+    font-size:12.5px;
+    color:var(--ink-faint);
+    text-align:center;
+    transition:border-color 0.15s, color 0.15s;
+  }
+  .dropzone.drag{ border-color:var(--copper); color:var(--copper); }
 
   .controls{
     display:flex;
     align-items:center;
     justify-content:space-between;
-    margin-top:16px;
+    gap:16px;
+    margin-top:20px;
     flex-wrap:wrap;
-    gap:12px;
   }
-  .slider-group{ display:flex; align-items:center; gap:10px; font-family:-apple-system, Helvetica, Arial, sans-serif; font-size:13px; color:var(--ink-soft); }
-  input[type=range]{ accent-color: var(--accent); width:120px; }
-
-  button{
-    font-family:-apple-system, Helvetica, Arial, sans-serif;
-    font-size:14px;
-    background:var(--ink);
-    color:var(--paper);
-    border:none;
-    padding:11px 22px;
-    border-radius:3px;
-    cursor:pointer;
+  .slider-group{ display:flex; align-items:center; gap:10px; font-size:13px; color:var(--ink-soft); }
+  input[type=range]{
+    accent-color:var(--copper);
+    width:110px;
   }
-  button:hover{ background:var(--accent); }
-  button:disabled{ background:var(--rule); cursor:not-allowed; }
-
-  .result{
-    margin-top:26px;
-    padding-top:22px;
-    border-top:1px solid var(--rule);
-    display:none;
-  }
-  .result.show{ display:block; }
-  .result-label{ font-family:-apple-system, Helvetica, Arial, sans-serif; font-size:13px; color:var(--accent); margin-bottom:10px; }
-  .result-text{ font-size:16px; line-height:1.75; }
-  .stats{
-    margin-top:16px;
-    font-family:-apple-system, Helvetica, Arial, sans-serif;
-    font-size:12.5px;
+  .btn-row{ display:flex; gap:10px; }
+  button{ font-family:'Work Sans', sans-serif; font-size:14px; cursor:pointer; border-radius:4px; border:1px solid transparent; }
+  .btn-ghost{
+    background:transparent;
     color:var(--ink-soft);
-    display:flex;
-    gap:18px;
+    border-color:var(--line);
+    padding:10px 16px;
   }
+  .btn-ghost:hover{ color:var(--ink); border-color:var(--ink-faint); }
+  .btn-primary{
+    background:var(--copper);
+    color:#1A1108;
+    font-weight:600;
+    padding:10px 22px;
+  }
+  .btn-primary:hover{ background:#D89A5E; }
+  .btn-primary:disabled{ background:var(--fade); color:var(--ink-faint); cursor:default; }
+
+  /* result */
+  .result{
+    margin-top:0;
+    max-height:0;
+    overflow:hidden;
+    transition:max-height 0.5s ease, margin-top 0.5s ease;
+  }
+  .result.show{ margin-top:28px; max-height:1400px; }
+  .result-inner{
+    padding-top:24px;
+    border-top:1px solid var(--line-soft);
+  }
+  .result-label{ display:flex; justify-content:space-between; align-items:center; margin-bottom:14px; }
+  .result-label .tag{ font-size:13px; color:var(--copper); }
+  .toggle-view{ font-size:12.5px; color:var(--ink-faint); background:none; border:none; text-decoration:underline; text-underline-offset:2px; padding:0; }
+  .toggle-view:hover{ color:var(--ink-soft); }
+
+  .summary-text{ font-size:16.5px; line-height:1.75; color:var(--ink); }
+
+  .full-text{ font-size:15px; line-height:1.8; color:var(--ink-faint); display:none; }
+  .full-text.show{ display:block; }
+  .full-text mark{
+    background:none;
+    color:var(--vapor);
+    font-weight:500;
+    border-bottom:1px solid var(--copper-soft);
+  }
+
+  .stats{
+    margin-top:20px;
+    display:flex;
+    gap:20px;
+    font-size:12.5px;
+    color:var(--ink-faint);
+  }
+
+  .actions{ display:flex; gap:10px; margin-top:18px; }
+  .btn-small{
+    background:none;
+    border:1px solid var(--line);
+    color:var(--ink-soft);
+    font-size:12.5px;
+    padding:7px 13px;
+  }
+  .btn-small:hover{ border-color:var(--ink-faint); color:var(--ink); }
+  .btn-small.copied{ border-color:var(--copper); color:var(--copper); }
 
   .note{
-    margin-top:32px;
-    font-family:-apple-system, Helvetica, Arial, sans-serif;
-    font-size:12.5px;
-    color:var(--ink-soft);
-    line-height:1.6;
-    border-left:2px solid var(--rule);
-    padding-left:14px;
+    margin-top:44px;
+    font-size:13px;
+    color:var(--ink-faint);
+    line-height:1.7;
+    max-width:52ch;
+  }
+
+  @media (max-width:520px){
+    .wrap{ padding:48px 18px 80px; }
+    h1{ font-size:32px; }
+    .panel{ padding:20px; }
   }
 </style>
 </head>
 <body>
+
+<div class="vapor-field"><span class="v1"></span><span class="v2"></span></div>
+
 <div class="wrap">
+
+  <div class="brand">
+    <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M9 2H15V7.5L19.5 16C20.3 17.5 19.2 19.3 17.5 19.3H6.5C4.8 19.3 3.7 17.5 4.5 16L9 7.5V2Z" stroke="#C98A4B" stroke-width="1.3"/>
+      <path d="M7 14.5H17" stroke="#C98A4B" stroke-width="1.3"/>
+      <circle cx="12" cy="10.5" r="0.9" fill="#D7E8DD"/>
+    </svg>
+    <span>Distill</span>
+  </div>
+
   <header>
-    <div class="kicker">PROTOTYPE</div>
-    <h1>Read less.<br><em>Understand</em> more.</h1>
-    <p class="lede">Paste any article, essay, or set of notes below. This pulls out the sentences that carry the most meaning — the same core idea behind tools people pay for.</p>
+    <h1>What's left when everything unnecessary boils away.</h1>
+    <p class="lede">Paste an article, essay, or set of notes. Distill keeps the sentences carrying the meaning, and lets everything else fade — nothing generated, nothing invented.</p>
   </header>
 
   <div class="panel">
-    <label for="input">YOUR TEXT</label>
-    <textarea id="input" placeholder="Paste a paragraph or two here...">Python is one of the most popular programming languages in the world today. It was created by Guido van Rossum and first released in 1991. Python is known for its simple, readable syntax that makes it a great first language for beginners. It is used in web development, data science, artificial intelligence, automation, and game development. Many large companies including Google, Netflix, and Instagram use Python in their technology stack. The Python community is large and active, with millions of free libraries available to solve almost any problem. Because it is beginner friendly, many schools and colleges teach Python as an introductory programming language. Learning Python well can open doors to careers in software engineering, data analysis, and machine learning.</textarea>
+    <div class="field-label">
+      <span>Your text</span>
+      <span class="count" id="wordCount">0 words</span>
+    </div>
+    <textarea id="input" placeholder="Paste something here, or drop a .txt file below...">Python is one of the most popular programming languages in the world today. It was created by Guido van Rossum and first released in 1991. Python is known for its simple, readable syntax that makes it a great first language for beginners. It is used in web development, data science, artificial intelligence, automation, and game development. Many large companies including Google, Netflix, and Instagram use Python in their technology stack. The Python community is large and active, with millions of free libraries available to solve almost any problem. Because it is beginner friendly, many schools and colleges teach Python as an introductory programming language. Learning Python well can open doors to careers in software engineering, data analysis, and machine learning.</textarea>
+
+    <div class="dropzone" id="dropzone">Drop a .txt file here, or click to browse</div>
+    <input type="file" id="fileInput" accept=".txt" style="display:none">
 
     <div class="controls">
       <div class="slider-group">
-        <span>Sentences:</span>
-        <input type="range" id="count" min="1" max="6" value="3">
+        <span>Sentences to keep</span>
+        <input type="range" id="count" min="1" max="8" value="3">
         <span id="countVal">3</span>
       </div>
-      <button id="go">Summarize</button>
+      <div class="btn-row">
+        <button class="btn-ghost" id="clearBtn">Clear</button>
+        <button class="btn-primary" id="go">Distill</button>
+      </div>
     </div>
 
     <div class="result" id="result">
-      <div class="result-label">SUMMARY</div>
-      <div class="result-text" id="output"></div>
-      <div class="stats" id="stats"></div>
+      <div class="result-inner">
+        <div class="result-label">
+          <span class="tag">The distillation</span>
+          <button class="toggle-view" id="toggleView">show inside the original</button>
+        </div>
+        <div class="summary-text" id="output"></div>
+        <div class="full-text" id="fullText"></div>
+        <div class="stats" id="stats"></div>
+        <div class="actions">
+          <button class="btn-small" id="copyBtn">Copy summary</button>
+        </div>
+      </div>
     </div>
   </div>
 
-  <div class="note">
-    This runs entirely in your browser — the same scoring logic (word-frequency based extraction) as the Python version. A real product would add: PDF upload, longer-document handling, and a paid tier for unlimited use.
-  </div>
+  <p class="note">This runs entirely in your browser — nothing is uploaded anywhere. It scores each sentence by how many important, frequently-repeated words it carries, then keeps the highest-scoring ones in their original order.</p>
+
 </div>
 
 <script>
@@ -153,10 +279,11 @@ function splitSentences(text){
   return text.trim().split(/(?<=[.!?])\s+/).map(s => s.trim()).filter(Boolean);
 }
 
-function summarize(text, n){
+function distill(text, n){
   const sentences = splitSentences(text);
-  if(sentences.length <= n) return { summary: text, total: sentences.length, kept: sentences.length };
-
+  if(sentences.length <= n){
+    return { summary: text, kept: sentences, all: sentences };
+  }
   const words = (text.toLowerCase().match(/\w+/g) || []).filter(w => !STOPWORDS.has(w) && w.length > 2);
   const freq = {};
   words.forEach(w => freq[w] = (freq[w]||0) + 1);
@@ -172,23 +299,111 @@ function summarize(text, n){
   const top = [...scored].sort((a,b) => b.score - a.score).slice(0, n).map(x => x.sentence);
   const ordered = sentences.filter(s => top.includes(s));
 
-  return { summary: ordered.join(" "), total: sentences.length, kept: ordered.length };
+  return { summary: ordered.join(" "), kept: ordered, all: sentences };
 }
 
+const input = document.getElementById('input');
+const wordCount = document.getElementById('wordCount');
 const countSlider = document.getElementById('count');
 const countVal = document.getElementById('countVal');
+const goBtn = document.getElementById('go');
+const clearBtn = document.getElementById('clearBtn');
+const result = document.getElementById('result');
+const output = document.getElementById('output');
+const fullText = document.getElementById('fullText');
+const stats = document.getElementById('stats');
+const toggleView = document.getElementById('toggleView');
+const copyBtn = document.getElementById('copyBtn');
+const dropzone = document.getElementById('dropzone');
+const fileInput = document.getElementById('fileInput');
+
+function updateWordCount(){
+  const words = input.value.trim().split(/\s+/).filter(Boolean).length;
+  wordCount.textContent = words + (words === 1 ? ' word' : ' words');
+}
+input.addEventListener('input', updateWordCount);
+updateWordCount();
+
 countSlider.addEventListener('input', () => countVal.textContent = countSlider.value);
 
-document.getElementById('go').addEventListener('click', () => {
-  const text = document.getElementById('input').value;
-  if(!text.trim()) return;
-  const n = parseInt(countSlider.value, 10);
-  const { summary, total, kept } = summarize(text, n);
+let lastResult = null;
 
-  document.getElementById('output').textContent = summary;
-  document.getElementById('stats').innerHTML =
-    `<span>${total} sentences → ${kept}</span><span>${text.split(/\s+/).length} words in original</span>`;
-  document.getElementById('result').classList.add('show');
+goBtn.addEventListener('click', () => {
+  const text = input.value.trim();
+  if(!text) return;
+
+  goBtn.disabled = true;
+  goBtn.textContent = 'Distilling…';
+
+  setTimeout(() => {
+    const n = parseInt(countSlider.value, 10);
+    const res = distill(text, n);
+    lastResult = res;
+
+    output.textContent = res.summary;
+
+    fullText.innerHTML = res.all.map(s =>
+      res.kept.includes(s) ? `<mark>${s}</mark>` : `<span style="opacity:0.55">${s}</span>`
+    ).join(' ');
+
+    stats.innerHTML = `<span>${res.kept.length} of ${res.all.length} sentences kept</span><span>${text.split(/\s+/).length} words in original</span>`;
+
+    result.classList.add('show');
+    goBtn.disabled = false;
+    goBtn.textContent = 'Distill';
+    copyBtn.textContent = 'Copy summary';
+    copyBtn.classList.remove('copied');
+  }, 450);
+});
+
+clearBtn.addEventListener('click', () => {
+  input.value = '';
+  updateWordCount();
+  result.classList.remove('show');
+  input.focus();
+});
+
+toggleView.addEventListener('click', () => {
+  const showingFull = fullText.classList.toggle('show');
+  output.style.display = showingFull ? 'none' : 'block';
+  toggleView.textContent = showingFull ? 'show summary only' : 'show inside the original';
+});
+
+copyBtn.addEventListener('click', () => {
+  if(!lastResult) return;
+  navigator.clipboard.writeText(lastResult.summary).then(() => {
+    copyBtn.textContent = 'Copied';
+    copyBtn.classList.add('copied');
+    setTimeout(() => {
+      copyBtn.textContent = 'Copy summary';
+      copyBtn.classList.remove('copied');
+    }, 1600);
+  });
+});
+
+// keyboard shortcut
+input.addEventListener('keydown', (e) => {
+  if((e.ctrlKey || e.metaKey) && e.key === 'Enter') goBtn.click();
+});
+
+// file drop
+function loadFile(file){
+  if(!file || !file.name.endsWith('.txt')) return;
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    input.value = e.target.result;
+    updateWordCount();
+  };
+  reader.readAsText(file);
+}
+dropzone.addEventListener('click', () => fileInput.click());
+fileInput.addEventListener('change', (e) => loadFile(e.target.files[0]));
+dropzone.addEventListener('dragover', (e) => { e.preventDefault(); dropzone.classList.add('drag'); });
+dropzone.addEventListener('dragleave', () => dropzone.classList.remove('drag'));
+dropzone.addEventListener('drop', (e) => {
+  e.preventDefault();
+  dropzone.classList.remove('drag');
+  loadFile(e.dataTransfer.files[0]);
 });
 </script>
 </body>
