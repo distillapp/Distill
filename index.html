@@ -4,508 +4,855 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Distill — the essence of any text</title>
-<meta name="description" content="A browser-based tool that extracts the sentences carrying real meaning from any email, article, or notes — no AI rewriting, nothing uploaded, entirely private.">
-<meta property="og:title" content="Distill — the essence of any text">
-<meta property="og:description" content="Paste an email or article. Distill keeps the sentences that matter — including buried asks and deadlines — and lets the rest fade.">
-<meta property="og:type" content="website">
-<meta name="twitter:card" content="summary">
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Crect width='24' height='24' fill='%230F211A'/%3E%3Cpath d='M9 2H15V7.5L19.5 16C20.3 17.5 19.2 19.3 17.5 19.3H6.5C4.8 19.3 3.7 17.5 4.5 16L9 7.5V2Z' stroke='%23C98A4B' stroke-width='1.5'/%3E%3Ccircle cx='12' cy='10.5' r='1' fill='%23D7E8DD'/%3E%3C/svg%3E">
+<meta name="description" content="Distill picks out the sentences that carry the meaning of your email, article, or notes — entirely in your browser, nothing uploaded.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;1,9..144,500&family=Work+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,560;0,9..144,650;1,9..144,500&family=Work+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
   :root{
-    --bg-deep:#0F211A;
-    --bg-panel:#16281F;
-    --line:#2A4436;
-    --line-soft:#213A2C;
-    --ink:#EFEADC;
-    --ink-soft:#96AC9E;
-    --ink-faint:#5C7166;
-    --copper:#C98A4B;
-    --copper-soft:#8E6134;
-    --vapor:#D7E8DD;
-    --fade:#3A4E42;
-    --error:#C97A6B;
+    --bottle:        #16231d;
+    --bottle-deep:   #0e1712;
+    --bottle-light:  #223328;
+    --parchment:     #f2ecdd;
+    --parchment-dim: #cfc7ae;
+    --brass:         #c99a2e;
+    --brass-bright:  #e0b747;
+    --rust:          #a85c3b;
+    --line:          rgba(242,236,221,0.14);
+    --focus:         #e0b747;
+    --radius-card:   14px;
+    --radius-chip:   999px;
+    --serif: "Fraunces", Georgia, serif;
+    --sans:  "Work Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   }
-  *{box-sizing:border-box;}
+
+  *{ box-sizing:border-box; }
   html{ scroll-behavior:smooth; }
+
   body{
     margin:0;
-    background:var(--bg-deep);
-    color:var(--ink);
-    font-family:'Work Sans', -apple-system, sans-serif;
+    background:
+      radial-gradient(1200px 700px at 82% -10%, rgba(201,154,46,0.10), transparent 60%),
+      var(--bottle);
+    color:var(--parchment);
+    font-family:var(--sans);
+    line-height:1.5;
     -webkit-font-smoothing:antialiased;
   }
 
-  .vapor-field{ position:fixed; inset:0; overflow:hidden; z-index:0; pointer-events:none; }
-  .vapor-field span{ position:absolute; border-radius:50%; filter:blur(60px); opacity:0.16; }
-  .v1{ width:520px; height:520px; background:var(--copper); top:-180px; left:-120px; animation:drift1 26s ease-in-out infinite; }
-  .v2{ width:420px; height:420px; background:var(--vapor); bottom:-160px; right:-100px; animation:drift2 32s ease-in-out infinite; }
-  @keyframes drift1{ 0%,100%{ transform:translate(0,0); } 50%{ transform:translate(40px,60px); } }
-  @keyframes drift2{ 0%,100%{ transform:translate(0,0); } 50%{ transform:translate(-30px,-50px); } }
+  a{ color:var(--brass-bright); }
 
-  @media (prefers-reduced-motion: reduce){
-    .v1, .v2{ animation:none; }
-    *{ scroll-behavior:auto !important; transition-duration:0.01ms !important; }
-  }
+  ::selection{ background:var(--brass); color:var(--bottle-deep); }
 
   :focus-visible{
-    outline:2px solid var(--copper);
-    outline-offset:2px;
-    border-radius:2px;
-  }
-  a{ color:var(--copper); }
-
-  footer{
-    position:relative; z-index:1;
-    max-width:720px; margin:0 auto;
-    padding:0 24px 48px;
-    font-size:12.5px; color:var(--ink-faint);
-    display:flex; justify-content:space-between; flex-wrap:wrap; gap:10px;
+    outline:2px solid var(--focus);
+    outline-offset:3px;
+    border-radius:4px;
   }
 
-  .wrap{ position:relative; z-index:1; max-width:720px; margin:0 auto; padding:72px 24px 100px; }
-
-  .brand{ display:flex; align-items:center; gap:10px; margin-bottom:64px; }
-  .brand svg{ width:22px; height:22px; }
-  .brand span{ font-family:'Fraunces', serif; font-size:17px; color:var(--ink); }
-
-  header{ margin-bottom:48px; }
-  h1{
-    font-family:'Fraunces', serif;
-    font-weight:500;
-    font-size:44px;
-    line-height:1.18;
-    letter-spacing:-0.01em;
-    margin:0 0 20px 0;
-    max-width:15ch;
-    color:var(--ink);
-  }
-  p.lede{ font-size:16px; line-height:1.65; color:var(--ink-soft); max-width:46ch; margin:0 0 8px 0; }
-  p.privacy-line{ font-size:13px; color:var(--ink-faint); display:flex; align-items:center; gap:6px; }
-  p.privacy-line svg{ width:13px; height:13px; flex-shrink:0; }
-
-  .panel{
-    background:var(--bg-panel);
-    border:1px solid var(--line-soft);
-    border-radius:6px;
-    padding:28px;
+  .wrap{
+    max-width:1180px;
+    margin:0 auto;
+    padding:0 clamp(20px, 4vw, 56px);
   }
 
-  .field-label{ display:flex; align-items:center; justify-content:space-between; margin-bottom:10px; flex-wrap:wrap; gap:8px; }
-  .field-label-left{ display:flex; align-items:center; gap:8px; }
-  .field-label span.name{ font-size:13px; color:var(--ink-faint); }
-  .info-toggle{
-    background:none; border:1px solid var(--line); color:var(--ink-faint);
-    font-size:11px; border-radius:20px; padding:2px 9px; cursor:pointer;
+  /* ---------- header ---------- */
+  header.site{
+    padding:28px 0 8px;
   }
-  .info-toggle:hover{ color:var(--ink-soft); border-color:var(--ink-faint); }
-  .info-toggle.active{ color:var(--copper); border-color:var(--copper-soft); }
-  .count{ color:var(--ink-faint); font-size:13px; font-variant-numeric:tabular-nums; }
-
-  .info-panel{
-    max-height:0; overflow:hidden; transition:max-height 0.3s ease, margin 0.3s ease;
-    font-size:13px; line-height:1.6; color:var(--ink-soft);
-    background:var(--bg-deep); border-radius:4px;
+  .brand{
+    display:flex;
+    align-items:baseline;
+    gap:10px;
   }
-  .info-panel.show{ max-height:200px; margin-bottom:14px; padding:12px 14px; border:1px solid var(--line-soft); }
+  .brand-mark{
+    font-family:var(--serif);
+    font-weight:650;
+    font-size:1.5rem;
+    letter-spacing:0.01em;
+  }
+  .brand-mark::after{
+    content:"";
+    display:inline-block;
+    width:6px; height:6px;
+    background:var(--brass-bright);
+    border-radius:50%;
+    margin-left:8px;
+    vertical-align:middle;
+  }
+  .brand-tag{
+    color:var(--parchment-dim);
+    font-size:0.92rem;
+  }
 
-  textarea{
-    width:100%;
-    min-height:190px;
-    resize:vertical;
-    background:var(--bg-deep);
+  /* ---------- hero copy ---------- */
+  .hero{
+    padding:34px 0 30px;
+    max-width:760px;
+  }
+  .hero h1{
+    font-family:var(--serif);
+    font-weight:560;
+    font-size:clamp(2rem, 4.2vw, 3.1rem);
+    line-height:1.08;
+    margin:0 0 18px;
+  }
+  .hero p{
+    font-size:1.06rem;
+    color:var(--parchment-dim);
+    max-width:56ch;
+    margin:0;
+  }
+  .hero p + p{ margin-top:10px; }
+  .method-note{
+    margin-top:18px;
+    padding:12px 16px;
     border:1px solid var(--line);
-    border-radius:4px;
-    padding:16px;
-    color:var(--ink);
-    font-family:'Work Sans', sans-serif;
-    font-size:15px;
-    line-height:1.65;
+    border-radius:10px;
+    background:rgba(242,236,221,0.04);
+    font-size:0.9rem;
+    color:var(--parchment-dim);
+    max-width:56ch;
   }
-  textarea::placeholder{ color:var(--ink-faint); }
-  textarea:focus{ outline:none; border-color:var(--copper-soft); }
+  .method-note strong{ color:var(--parchment); font-weight:600; }
 
-  .row-under-textarea{ display:flex; gap:10px; margin-top:10px; flex-wrap:wrap; }
-  .dropzone{
+  /* ---------- sample chips ---------- */
+  .samples{
+    margin-top:22px;
+    display:flex;
+    flex-wrap:wrap;
+    gap:8px;
+    align-items:center;
+  }
+  .samples span.label{
+    color:var(--parchment-dim);
+    font-size:0.86rem;
+    margin-right:2px;
+  }
+  .chip{
+    font-family:var(--sans);
+    font-size:0.86rem;
+    color:var(--parchment);
+    background:transparent;
+    border:1px solid var(--line);
+    border-radius:var(--radius-chip);
+    padding:7px 15px;
+    cursor:pointer;
+    transition:border-color .15s ease, background .15s ease;
+  }
+  .chip:hover{ border-color:var(--brass); background:rgba(201,154,46,0.08); }
+
+  /* ---------- tool ---------- */
+  .tool{
+    margin-top:30px;
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:18px;
+  }
+  @media (max-width:860px){
+    .tool{ grid-template-columns:1fr; }
+  }
+
+  .pane{
+    background:var(--bottle-light);
+    border:1px solid var(--line);
+    border-radius:var(--radius-card);
+    display:flex;
+    flex-direction:column;
+    min-height:340px;
+  }
+  .pane-head{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    padding:14px 18px;
+    border-bottom:1px solid var(--line);
+  }
+  .pane-head h2{
+    font-family:var(--sans);
+    font-size:0.85rem;
+    font-weight:600;
+    margin:0;
+    color:var(--parchment-dim);
+  }
+  .pane-head .count{
+    font-size:0.8rem;
+    color:var(--parchment-dim);
+    font-variant-numeric:tabular-nums;
+  }
+
+  #dropzone{
+    position:relative;
     flex:1;
-    min-width:180px;
-    border:1px dashed var(--line);
-    border-radius:4px;
-    padding:10px 14px;
-    font-size:12.5px;
-    color:var(--ink-faint);
-    text-align:center;
-    transition:border-color 0.15s, color 0.15s;
+    display:flex;
+  }
+  #dropzone.dragging::after{
+    content:"Drop your .txt file";
+    position:absolute; inset:8px;
+    display:flex; align-items:center; justify-content:center;
+    border:2px dashed var(--brass);
+    border-radius:10px;
+    background:rgba(201,154,46,0.10);
+    color:var(--brass-bright);
+    font-size:0.95rem;
+    pointer-events:none;
+  }
+  textarea{
+    flex:1;
+    width:100%;
+    resize:none;
+    border:none;
+    background:transparent;
+    color:var(--parchment);
+    font-family:var(--sans);
+    font-size:0.98rem;
+    line-height:1.6;
+    padding:16px 18px;
+  }
+  textarea::placeholder{ color:rgba(242,236,221,0.35); }
+  textarea:focus{ outline:none; }
+
+  #output{
+    flex:1;
+    padding:16px 18px;
+    font-size:0.98rem;
+    line-height:1.7;
+    overflow-y:auto;
+  }
+  #output .empty{
+    color:rgba(242,236,221,0.35);
+    font-style:italic;
+  }
+  #output .kept{
+    background:rgba(201,154,46,0.16);
+    border-radius:3px;
+    box-shadow:0 0 0 1px rgba(201,154,46,0.20);
+    padding:0 1px;
+  }
+  #output .faded{
+    transition:opacity .2s ease;
+  }
+
+  /* ---------- controls bar ---------- */
+  .controls{
+    margin-top:16px;
+    padding:16px 18px;
+    background:var(--bottle-light);
+    border:1px solid var(--line);
+    border-radius:var(--radius-card);
+    display:flex;
+    flex-wrap:wrap;
+    align-items:center;
+    gap:20px;
+  }
+  .slider-group{
+    flex:1;
+    min-width:220px;
+    display:flex;
+    flex-direction:column;
+    gap:6px;
+  }
+  .slider-group .row{
+    display:flex;
+    justify-content:space-between;
+    font-size:0.86rem;
+    color:var(--parchment-dim);
+  }
+  .slider-group .row strong{ color:var(--parchment); font-weight:600; }
+  input[type="range"]{
+    -webkit-appearance:none;
+    width:100%;
+    height:4px;
+    border-radius:2px;
+    background:linear-gradient(to right, var(--brass) var(--fill,35%), rgba(242,236,221,0.14) var(--fill,35%));
+    outline:none;
+  }
+  input[type="range"]::-webkit-slider-thumb{
+    -webkit-appearance:none;
+    width:16px; height:16px;
+    border-radius:50%;
+    background:var(--brass-bright);
+    border:2px solid var(--bottle-deep);
+    cursor:pointer;
+    margin-top:0;
+  }
+  input[type="range"]::-moz-range-thumb{
+    width:16px; height:16px;
+    border-radius:50%;
+    background:var(--brass-bright);
+    border:2px solid var(--bottle-deep);
     cursor:pointer;
   }
-  .dropzone.drag{ border-color:var(--copper); color:var(--copper); }
-  .dropzone.error{ border-color:var(--error); color:var(--error); }
 
-  .sample-btn{
-    background:none; border:1px solid var(--line); color:var(--ink-soft);
-    font-size:12.5px; padding:0 16px; border-radius:4px; cursor:pointer; white-space:nowrap;
-  }
-  .sample-btn:hover{ border-color:var(--ink-faint); color:var(--ink); }
-
-  .controls{
+  .btn-group{
     display:flex;
-    align-items:center;
-    justify-content:space-between;
-    gap:16px;
-    margin-top:20px;
+    gap:10px;
     flex-wrap:wrap;
   }
-  .slider-group{ display:flex; align-items:center; gap:10px; font-size:13px; color:var(--ink-soft); flex:1; min-width:200px; }
-  input[type=range]{ accent-color:var(--copper); flex:1; min-width:90px; max-width:150px; }
-  .btn-row{ display:flex; gap:10px; }
-  button{ font-family:'Work Sans', sans-serif; font-size:14px; cursor:pointer; border-radius:4px; border:1px solid transparent; }
-  .btn-ghost{ background:transparent; color:var(--ink-soft); border-color:var(--line); padding:10px 16px; }
-  .btn-ghost:hover{ color:var(--ink); border-color:var(--ink-faint); }
-  .btn-primary{ background:var(--copper); color:#1A1108; font-weight:600; padding:10px 22px; }
-  .btn-primary:hover{ background:#D89A5E; }
-  .btn-primary:disabled{ background:var(--fade); color:var(--ink-faint); cursor:default; }
-  button:active:not(:disabled){ transform:translateY(1px); }
+  button.action{
+    font-family:var(--sans);
+    font-weight:600;
+    font-size:0.92rem;
+    padding:10px 20px;
+    border-radius:var(--radius-chip);
+    border:1px solid transparent;
+    cursor:pointer;
+    transition:transform .1s ease, opacity .15s ease;
+  }
+  button.action:active{ transform:scale(0.97); }
+  button.primary{
+    background:var(--brass-bright);
+    color:var(--bottle-deep);
+  }
+  button.primary:hover{ background:#eec463; }
+  button.secondary{
+    background:transparent;
+    border-color:var(--line);
+    color:var(--parchment);
+  }
+  button.secondary:hover{ border-color:var(--brass); }
+  button.secondary:disabled{
+    opacity:0.4;
+    cursor:not-allowed;
+  }
+  button.secondary:disabled:hover{ border-color:var(--line); }
 
-  .inline-msg{ font-size:12.5px; color:var(--error); margin-top:10px; display:none; }
-  .inline-msg.show{ display:block; }
+  /* ---------- stats ---------- */
+  .stats{
+    margin-top:14px;
+    display:flex;
+    flex-wrap:wrap;
+    gap:8px 22px;
+    font-size:0.86rem;
+    color:var(--parchment-dim);
+    min-height:1.2em;
+  }
+  .stats b{ color:var(--parchment); font-weight:600; }
+  .toast{
+    color:var(--brass-bright);
+    font-weight:600;
+  }
+  .error-note{
+    color:var(--rust);
+  }
 
-  .result{ margin-top:0; max-height:0; overflow:hidden; transition:max-height 0.5s ease, margin-top 0.5s ease; }
-  .result.show{ margin-top:28px; max-height:1600px; }
-  .result-inner{ padding-top:24px; border-top:1px solid var(--line-soft); }
-  .result-label{ display:flex; justify-content:space-between; align-items:center; margin-bottom:6px; flex-wrap:wrap; gap:8px; }
-  .result-label .tag{ font-size:13px; color:var(--copper); }
-  .toggle-view{ font-size:12.5px; color:var(--ink-faint); background:none; border:none; text-decoration:underline; text-underline-offset:2px; padding:0; cursor:pointer; }
-  .toggle-view:hover{ color:var(--ink-soft); }
+  /* ---------- feedback ---------- */
+  .feedback{
+    margin-top:14px;
+    padding:14px 18px;
+    border:1px solid var(--line);
+    border-radius:10px;
+    background:rgba(242,236,221,0.03);
+    display:flex;
+    flex-wrap:wrap;
+    align-items:center;
+    gap:12px;
+    font-size:0.9rem;
+    color:var(--parchment-dim);
+  }
+  .fb-btn{
+    background:transparent;
+    border:1px solid var(--line);
+    border-radius:var(--radius-chip);
+    padding:6px 13px;
+    font-size:1rem;
+    line-height:1;
+    cursor:pointer;
+    transition:border-color .15s ease, background .15s ease, transform .1s ease;
+  }
+  .fb-btn:hover{ border-color:var(--brass); background:rgba(201,154,46,0.08); }
+  .fb-btn:active{ transform:scale(0.94); }
+  .fb-btn.chosen{ border-color:var(--brass-bright); background:rgba(201,154,46,0.14); }
+  .feedback .fb-thanks{ color:var(--brass-bright); font-weight:600; }
+  .fb-more{
+    width:100%;
+    display:flex;
+    flex-direction:column;
+    gap:8px;
+    margin-top:4px;
+  }
+  .fb-more textarea{
+    width:100%;
+    min-height:64px;
+    resize:vertical;
+    background:var(--bottle-deep);
+    border:1px solid var(--line);
+    border-radius:8px;
+    color:var(--parchment);
+    font-family:var(--sans);
+    font-size:0.9rem;
+    padding:10px 12px;
+  }
+  .fb-more .fb-row{
+    display:flex;
+    align-items:center;
+    gap:12px;
+  }
+  .fb-hint{
+    font-size:0.8rem;
+    color:var(--parchment-dim);
+    opacity:0.8;
+  }
 
-  .compression-line{ font-size:12.5px; color:var(--ink-faint); margin-bottom:16px; }
-  .compression-line b{ color:var(--vapor); font-weight:500; }
+  /* ---------- how it works ---------- */
+  details.how{
+    margin-top:34px;
+    border-top:1px solid var(--line);
+    padding-top:20px;
+  }
+  details.how summary{
+    cursor:pointer;
+    font-family:var(--serif);
+    font-size:1.15rem;
+    font-weight:560;
+    list-style:none;
+  }
+  details.how summary::-webkit-details-marker{ display:none; }
+  details.how summary::before{
+    content:"+ ";
+    color:var(--brass-bright);
+  }
+  details.how[open] summary::before{ content:"– "; }
+  .how-body{
+    margin-top:14px;
+    max-width:66ch;
+    color:var(--parchment-dim);
+    font-size:0.96rem;
+  }
+  .how-body p{ margin:0 0 12px; }
+  .how-body ul{ margin:0 0 12px; padding-left:20px; }
+  .how-body li{ margin-bottom:6px; }
 
-  .summary-text{ font-size:16.5px; line-height:1.75; color:var(--ink); }
+  footer.site{
+    margin-top:44px;
+    padding:22px 0 40px;
+    border-top:1px solid var(--line);
+    color:var(--parchment-dim);
+    font-size:0.86rem;
+  }
 
-  .full-text{ font-size:15px; line-height:1.8; color:var(--ink-faint); display:none; }
-  .full-text.show{ display:block; }
-  .full-text mark{ background:none; color:var(--vapor); font-weight:500; cursor:help; }
-
-  .stats{ margin-top:20px; display:flex; gap:20px; font-size:12.5px; color:var(--ink-faint); flex-wrap:wrap; }
-
-  .actions{ display:flex; gap:10px; margin-top:18px; flex-wrap:wrap; }
-  .btn-small{ background:none; border:1px solid var(--line); color:var(--ink-soft); font-size:12.5px; padding:7px 13px; }
-  .btn-small:hover{ border-color:var(--ink-faint); color:var(--ink); }
-  .btn-small.copied{ border-color:var(--copper); color:var(--copper); }
-  .btn-small.failed{ border-color:var(--error); color:var(--error); }
-
-  .note{ margin-top:44px; font-size:13px; color:var(--ink-faint); line-height:1.7; max-width:52ch; }
-
-  @media (max-width:520px){
-    .wrap{ padding:48px 16px 80px; }
-    h1{ font-size:30px; }
-    .panel{ padding:18px; }
-    .controls{ flex-direction:column; align-items:stretch; }
-    .slider-group{ max-width:none; }
-    input[type=range]{ max-width:none; }
-    .btn-row{ width:100%; }
-    .btn-row button{ flex:1; }
-    .row-under-textarea{ flex-direction:column; }
-    .sample-btn{ padding:10px; }
+  @media (prefers-reduced-motion:reduce){
+    *{ transition:none !important; scroll-behavior:auto !important; }
   }
 </style>
 </head>
 <body>
 
-<div class="vapor-field" aria-hidden="true"><span class="v1"></span><span class="v2"></span></div>
-
-<main class="wrap">
-
-  <div class="brand">
-    <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <path d="M9 2H15V7.5L19.5 16C20.3 17.5 19.2 19.3 17.5 19.3H6.5C4.8 19.3 3.7 17.5 4.5 16L9 7.5V2Z" stroke="#C98A4B" stroke-width="1.3"/>
-      <path d="M7 14.5H17" stroke="#C98A4B" stroke-width="1.3"/>
-      <circle cx="12" cy="10.5" r="0.9" fill="#D7E8DD"/>
-    </svg>
-    <span>Distill</span>
-  </div>
-
-  <header>
-    <h1>What's left when everything unnecessary boils away.</h1>
-    <p class="lede">Paste an email, article, or set of notes. Distill keeps the sentences carrying the meaning — including buried asks and deadlines — and lets the rest fade.</p>
-    <p class="privacy-line">
-      <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 2L4 5.5V11C4 16 7.5 20.5 12 22C16.5 20.5 20 16 20 11V5.5L12 2Z" stroke="#5C7166" stroke-width="1.4"/></svg>
-      Runs fully in your browser — nothing is ever uploaded or sent anywhere.
-    </p>
+<div class="wrap">
+  <header class="site">
+    <div class="brand">
+      <span class="brand-mark">Distill</span>
+      <span class="brand-tag">the essence of any text</span>
+    </div>
   </header>
 
-  <div class="panel">
-    <div class="field-label">
-      <div class="field-label-left">
-        <span class="name">Your text</span>
-        <button class="info-toggle" id="infoToggle">ⓘ extractive, not AI</button>
+  <section class="hero">
+    <h1>What's left when everything unnecessary boils away.</h1>
+    <p>Paste an email, article, or a page of notes. Distill finds the sentences carrying the meaning and lets the rest fade — nothing generated, nothing invented.</p>
+    <div class="method-note">
+      <strong>How this is different from an AI summary:</strong> Distill doesn't write new sentences. It selects and ranks the sentences you already wrote, weighing key terms, dates, and phrasing like "please" or "by Friday" — then shows you exactly which ones it kept, and why.
+    </div>
+    <div class="samples">
+      <span class="label">Try it with:</span>
+      <button class="chip" data-sample="email">A work email</button>
+      <button class="chip" data-sample="article">A news article</button>
+      <button class="chip" data-sample="notes">Meeting notes</button>
+    </div>
+  </section>
+
+  <section class="tool">
+    <div class="pane">
+      <div class="pane-head">
+        <h2>Your text</h2>
+        <span class="count" id="wordCount">0 words</span>
       </div>
-      <span class="count" id="wordCount">0 words</span>
-    </div>
-
-    <div class="info-panel" id="infoPanel">
-      Distill is <b style="color:var(--ink)">extractive</b> — it selects your highest-scoring original sentences as-is. It doesn't rewrite, paraphrase, or generate new text like an AI chatbot would. What you get back is always word-for-word from what you pasted.
-    </div>
-
-    <textarea id="input" placeholder="Paste an email, article, or notes here, or drop a .txt file below..."></textarea>
-
-    <div class="row-under-textarea">
-      <div class="dropzone" id="dropzone" role="button" tabindex="0" aria-label="Upload a text file">Drop a .txt file here, or click to browse</div>
-      <button class="sample-btn" id="sampleBtn">Try a sample email</button>
-    </div>
-    <input type="file" id="fileInput" accept=".txt" style="display:none">
-
-    <div class="controls">
-      <div class="slider-group">
-        <span>Target length</span>
-        <input type="range" id="targetSlider" min="10" max="50" step="5" value="25">
-        <span id="targetVal">25%</span>
-      </div>
-      <div class="btn-row">
-        <button class="btn-ghost" id="clearBtn">Clear</button>
-        <button class="btn-primary" id="go">Distill</button>
+      <div id="dropzone">
+        <textarea id="input" placeholder="Paste text here, or drop a .txt file…" spellcheck="false"></textarea>
       </div>
     </div>
-    <div class="inline-msg" id="inlineMsg">Paste or type some text first.</div>
 
-    <div class="result" id="result" role="status" aria-live="polite">
-      <div class="result-inner">
-        <div class="result-label">
-          <span class="tag">The distillation</span>
-          <button class="toggle-view" id="toggleView">show inside the original</button>
-        </div>
-        <div class="compression-line" id="compressionLine"></div>
-        <div class="summary-text" id="output"></div>
-        <div class="full-text" id="fullText"></div>
-        <div class="stats" id="stats"></div>
-        <div class="actions">
-          <button class="btn-small" id="copyBtn">Copy summary</button>
-        </div>
+    <div class="pane">
+      <div class="pane-head">
+        <h2>What's kept</h2>
+        <span class="count" id="keptCount">—</span>
+      </div>
+      <div id="output"><span class="empty">The distilled sentences will highlight here, inside your original text.</span></div>
+    </div>
+  </section>
+
+  <div class="controls">
+    <div class="slider-group">
+      <div class="row">
+        <span>How much to keep</span>
+        <strong id="pctLabel">30%</strong>
+      </div>
+      <input type="range" id="pct" min="10" max="70" value="30" step="5">
+    </div>
+    <div class="btn-group">
+      <button class="action primary" id="distillBtn">Distill</button>
+      <button class="action secondary" id="copyBtn" disabled>Copy summary</button>
+      <button class="action secondary" id="clearBtn">Clear</button>
+    </div>
+  </div>
+
+  <div class="stats" id="stats"></div>
+
+  <div class="feedback" id="feedback" hidden>
+    <span id="fbPrompt">Was this a good distillation?</span>
+    <button class="fb-btn" id="fbUp" aria-label="Yes, this was useful" type="button">👍</button>
+    <button class="fb-btn" id="fbDown" aria-label="Not quite right" type="button">👎</button>
+    <span class="fb-thanks" id="fbThanks" hidden>Thanks — that helps.</span>
+    <div class="fb-more" id="fbMore" hidden>
+      <textarea id="fbText" placeholder="What would have made this better? (please don't paste anything private — this opens a public GitHub issue)"></textarea>
+      <div class="fb-row">
+        <button class="action secondary" id="fbSend" type="button">Send feedback</button>
+        <span class="fb-hint">Opens a new GitHub issue in another tab — your original text is never included.</span>
       </div>
     </div>
   </div>
 
-  <p class="note">Sentences are scored on four signals: repeated important words, dates/times/deadlines, request phrasing ("please," "could you," "by Friday"), and position (opening and closing sentences often carry context or the actual ask). Hover any sentence in "show inside the original" to see why it scored the way it did.</p>
+  <details class="how">
+    <summary>How Distill actually works</summary>
+    <div class="how-body">
+      <p>Distill uses <em>extractive</em> summarization: every sentence in your text is scored, and the top-scoring ones are kept in their original order. Nothing is rewritten or generated, so you're always reading your own words.</p>
+      <p>Each sentence's score combines:</p>
+      <ul>
+        <li><strong>Keyword weight</strong> — how many important, frequently-repeated words it contains.</li>
+        <li><strong>Position</strong> — opening and closing sentences get a small boost, since they usually carry framing or a conclusion.</li>
+        <li><strong>Signal phrases</strong> — dates, numbers, and action language ("please," "by Friday," "need," "deadline") are weighted higher, since these usually carry the actual ask.</li>
+        <li><strong>Length balance</strong> — very short filler sentences and overly long run-ons are both discounted relative to sentences of typical length.</li>
+      </ul>
+      <p>This works best on text where the point is stated somewhere in plain prose — it won't catch an ask buried entirely in a signature block or an image. And it's still not the same as a human reading the text closely: for anything high-stakes, use it as a first pass, not a final judgment.</p>
+      <p>Everything above runs in JavaScript in your browser. Your text is never sent anywhere.</p>
+    </div>
+  </details>
 
-</main>
-
-<footer>
-  <span>Distill — built while learning Python</span>
-  <span>No tracking, no accounts, no data leaves your browser</span>
-</footer>
+  <footer class="site">
+    This runs entirely in your browser — nothing is uploaded anywhere, ever. ·
+    <a href="https://github.com/distillapp/Distill/issues/new" target="_blank" rel="noopener">Report a bug or suggest an idea</a>
+  </footer>
+</div>
 
 <script>
-const STOPWORDS = new Set("a an the is are was were be been being of in on at to for with and or but if then so as by from this that these those it its he she they we you i not no yes do does did have has had will would can could should may might".split(" "));
-const DATE_RE = /\b(mon|tue|wed|thu|fri|sat|sun)(day)?\b|\b(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[a-z]*\b|\btoday\b|\btomorrow\b|\btonight\b|\bnoon\b|\bmidnight\b|\b\d{1,2}(:\d{2})?\s?(am|pm)\b|\bdeadline\b|\bdue\b|\bend of (the )?(day|week)\b|\beod\b|\bcob\b|\basap\b/i;
-const REQUEST_RE = /\b(please|could you|can you|would you|need to|needs to|must|should|kindly|let me know|required|reminder|make sure|don'?t forget|remember to)\b/i;
+(function(){
+  const STOPWORDS = new Set(("a about above after again against all am an and any are aren't as at be because been before being below between both but by can't cannot could couldn't did didn't do does doesn't doing don't down during each few for from further had hadn't has hasn't have haven't having he he'd he'll he's her here here's hers herself him himself his how how's i i'd i'll i'm i've if in into is isn't it it's its itself let's me more most mustn't my myself no nor not of off on once only or other ought our ours ourselves out over own same shan't she she'd she'll she's should shouldn't so some such than that that's the their theirs them themselves then there there's these they they'd they'll they're they've this those through to too under until up very was wasn't we we'd we'll we're we've were weren't what what's when when's where where's which while who who's whom why why's with won't would wouldn't you you'd you'll you're you've your yours yourself yourselves").split(" "));
 
-const SAMPLE_EMAIL = "Hi team, Hope you're all doing well and had a nice weekend. Just wanted to check in on a few things before we wrap up the week. Also, thanks again for the great work on the client presentation last week, it really landed well and the client seemed impressed overall. On a related note, I wanted to loop back about the budget doc since a few people mentioned they hadn't had a chance to look yet. Could you please send me the finalized budget numbers by Thursday at 5pm so I can include them in Monday's report? No rush on anything else, just wanted to flag that one before the week ends. Thanks so much, and enjoy the rest of your week!";
+  const ACTION_WORDS = new Set(["please","kindly","must","need","needs","needed","require","requires","required","should","shall","asap","urgent","urgently","deadline","request","requesting","respond","reply","confirm","approve","approval","review","schedule","reschedule","cancel","action","asking","ask","by","due","today","tomorrow","tonight","immediately"]);
 
-function splitSentences(text){
-  return text.trim().split(/(?<=[.!?])\s+/).map(s => s.trim()).filter(Boolean);
-}
+  const MONTHS = /\b(january|february|march|april|may|june|july|august|september|october|november|december|mon|tue|wed|thu|fri|sat|sun|monday|tuesday|wednesday|thursday|friday|saturday|sunday)\b/i;
 
-function analyzeSentence(sentence, freq, index, total){
-  const wordsRaw = sentence.match(/\w+/g) || [];
-  const wordsLower = wordsRaw.map(w => w.toLowerCase());
-  const freqScore = wordsLower.length ? wordsLower.reduce((s,w) => s+(freq[w]||0),0)/wordsLower.length : 0;
-  const numberSignal = (/\d/.test(sentence) || DATE_RE.test(sentence)) ? 1 : 0;
-  const requestSignal = REQUEST_RE.test(sentence) ? 1 : 0;
-  const positionSignal = (index === 0 || index === total - 1) ? 1 : 0;
-  const score = (freqScore * 0.45) + (numberSignal * 0.25) + (requestSignal * 0.35) + (positionSignal * 0.15);
+  const SAMPLES = {
+    email:
+`Hi team,
 
-  const reasons = [];
-  if(requestSignal) reasons.push('contains a request');
-  if(numberSignal) reasons.push('contains a date/number');
-  if(positionSignal) reasons.push(index === 0 ? 'opening sentence' : 'closing sentence');
-  if(freqScore > 0.3) reasons.push('repeats key terms');
-  if(!reasons.length) reasons.push('low relevance');
+Hope you all had a good weekend. I wanted to follow up on the client onboarding project before our sync tomorrow.
 
-  return { sentence, score, reasons };
-}
+We've made good progress this sprint — the data migration script is finished and QA has signed off on the staging environment. However, we're still waiting on legal to confirm the updated data-processing agreement, and that's currently blocking the production rollout.
 
-function distill(text, targetPercent){
-  const sentences = splitSentences(text);
-  const totalWords = (text.match(/\w+/g) || []).length;
+Could you please review the attached contract redlines and send your comments back by end of day Thursday? If we don't have sign-off by Friday, we'll need to push the launch date to next week, which will affect the client's go-live communications.
 
-  if(sentences.length <= 1){
-    return { summary: text, kept: sentences, all: sentences, analyzed: sentences.map(s=>({sentence:s,score:1,reasons:['entire text']})), totalWords, summaryWords: totalWords };
+Also, a quick reminder that the design review is happening Wednesday at 2pm — please come with feedback on the new dashboard mockups.
+
+Thanks for all the hard work this sprint. Let's talk through any blockers tomorrow.
+
+Best,
+Priya`,
+    article:
+`Scientists have long been puzzled by the rapid decline of coral reefs in warming ocean waters. A new study published this week offers one of the clearest pictures yet of how heat stress disrupts the delicate relationship between coral and the algae living inside it.
+
+Researchers tracked reef systems across the Pacific over a five-year period, measuring water temperature alongside coral health at over two hundred sites. They found that even brief spikes above a critical temperature threshold were enough to trigger bleaching events, regardless of how quickly conditions returned to normal afterward.
+
+The study's lead author said the findings suggest that average warming trends alone understate the risk to reef ecosystems, since short, intense heatwaves can do lasting damage that gradual temperature increases would not predict. Local marine sanctuaries with strict fishing restrictions showed somewhat better recovery rates than unprotected reefs, though none were fully immune to bleaching.
+
+The research team is now working with conservation groups to identify reef sections that show unusual heat resilience, in hopes of using them as a genetic source for restoration efforts elsewhere. Funding for the next phase of the study is still being finalized.`,
+    notes:
+`Meeting notes — Product sync, Tuesday
+
+Attendees: Alex, Jordan, Sam, Priya (remote)
+
+We reviewed current sprint progress. The onboarding flow redesign is about 80% complete, with the remaining work focused on error states and edge cases for the payment step.
+
+Jordan raised a concern about the third-party analytics integration causing a noticeable slowdown on the mobile app's cold start. The team agreed this needs to be investigated before the next release, and Sam will profile the app this week to isolate the cause.
+
+Decision: we will delay the analytics vendor switch until the performance issue is resolved, rather than shipping both changes together.
+
+Action items: Sam to share profiling results by Thursday. Alex to update the release checklist to include a mobile performance check going forward. Priya to notify the client-facing team about the adjusted timeline.
+
+Next sync is scheduled for the same time next week.`
+  };
+
+  const input      = document.getElementById('input');
+  const output     = document.getElementById('output');
+  const wordCount  = document.getElementById('wordCount');
+  const keptCount  = document.getElementById('keptCount');
+  const pct        = document.getElementById('pct');
+  const pctLabel   = document.getElementById('pctLabel');
+  const distillBtn = document.getElementById('distillBtn');
+  const copyBtn    = document.getElementById('copyBtn');
+  const clearBtn   = document.getElementById('clearBtn');
+  const stats      = document.getElementById('stats');
+  const dropzone   = document.getElementById('dropzone');
+
+  const feedback   = document.getElementById('feedback');
+  const fbUp       = document.getElementById('fbUp');
+  const fbDown     = document.getElementById('fbDown');
+  const fbThanks   = document.getElementById('fbThanks');
+  const fbMore     = document.getElementById('fbMore');
+  const fbText     = document.getElementById('fbText');
+  const fbSend     = document.getElementById('fbSend');
+
+  let lastSummary = "";
+
+  function resetFeedback(hide){
+    feedback.hidden = !!hide;
+    fbUp.classList.remove('chosen');
+    fbDown.classList.remove('chosen');
+    fbThanks.hidden = true;
+    fbMore.hidden = true;
+    fbText.value = "";
   }
 
-  const words = (text.toLowerCase().match(/\w+/g) || []).filter(w => !STOPWORDS.has(w) && w.length > 2);
-  const freq = {};
-  words.forEach(w => freq[w] = (freq[w]||0)+1);
-  const max = Math.max(...Object.values(freq), 1);
-  Object.keys(freq).forEach(w => freq[w] = freq[w]/max);
-
-  const analyzed = sentences.map((s,i) => analyzeSentence(s, freq, i, sentences.length));
-  const targetWords = Math.max(6, Math.round(totalWords * targetPercent/100));
-
-  const ranked = [...analyzed].sort((a,b) => b.score - a.score);
-  const kept = [];
-  let acc = 0;
-  for(const item of ranked){
-    if(acc >= targetWords && kept.length >= 1) break;
-    kept.push(item);
-    acc += (item.sentence.match(/\w+/g) || []).length;
+  function updateWordCount(){
+    const words = input.value.trim().length ? input.value.trim().split(/\s+/).length : 0;
+    wordCount.textContent = words + (words === 1 ? " word" : " words");
   }
-  const keptSet = new Set(kept.map(k => k.sentence));
-  const orderedKept = sentences.filter(s => keptSet.has(s));
-  const summary = orderedKept.join(' ');
-  const summaryWords = (summary.match(/\w+/g)||[]).length;
 
-  return { summary, kept: orderedKept, all: sentences, analyzed, totalWords, summaryWords };
-}
-
-const input = document.getElementById('input');
-const wordCount = document.getElementById('wordCount');
-const targetSlider = document.getElementById('targetSlider');
-const targetVal = document.getElementById('targetVal');
-const goBtn = document.getElementById('go');
-const clearBtn = document.getElementById('clearBtn');
-const result = document.getElementById('result');
-const output = document.getElementById('output');
-const fullText = document.getElementById('fullText');
-const stats = document.getElementById('stats');
-const compressionLine = document.getElementById('compressionLine');
-const toggleView = document.getElementById('toggleView');
-const copyBtn = document.getElementById('copyBtn');
-const dropzone = document.getElementById('dropzone');
-const fileInput = document.getElementById('fileInput');
-const sampleBtn = document.getElementById('sampleBtn');
-const inlineMsg = document.getElementById('inlineMsg');
-const infoToggle = document.getElementById('infoToggle');
-const infoPanel = document.getElementById('infoPanel');
-
-function updateWordCount(){
-  const words = input.value.trim().split(/\s+/).filter(Boolean).length;
-  wordCount.textContent = words + (words === 1 ? ' word' : ' words');
-}
-input.addEventListener('input', () => { updateWordCount(); inlineMsg.classList.remove('show'); });
-updateWordCount();
-
-targetSlider.addEventListener('input', () => targetVal.textContent = targetSlider.value + '%');
-
-infoToggle.addEventListener('click', () => {
-  infoPanel.classList.toggle('show');
-  infoToggle.classList.toggle('active');
-});
-
-sampleBtn.addEventListener('click', () => {
-  input.value = SAMPLE_EMAIL;
-  updateWordCount();
-  input.focus();
-});
-
-let lastResult = null;
-
-goBtn.addEventListener('click', () => {
-  const text = input.value.trim();
-  if(!text){
-    inlineMsg.classList.add('show');
-    return;
+  function splitSentences(text){
+    const clean = text.replace(/\s+/g, ' ').trim();
+    if(!clean) return [];
+    const matches = clean.match(/[^.!?]+[.!?]+(?=\s|$)|[^.!?]+$/g);
+    return matches ? matches.map(s => s.trim()).filter(Boolean) : [];
   }
-  inlineMsg.classList.remove('show');
 
-  goBtn.disabled = true;
-  goBtn.textContent = 'Distilling…';
+  function tokenize(sentence){
+    return sentence.toLowerCase().replace(/[^a-z0-9\s']/g, ' ').split(/\s+/).filter(Boolean);
+  }
 
-  setTimeout(() => {
-    const pct = parseInt(targetSlider.value, 10);
-    const res = distill(text, pct);
-    lastResult = res;
+  function scoreSentences(sentences){
+    const freq = {};
+    const tokenLists = sentences.map(s => tokenize(s));
 
-    output.textContent = res.summary;
+    tokenLists.forEach(tokens => {
+      tokens.forEach(w => {
+        if(!STOPWORDS.has(w) && w.length > 2){
+          freq[w] = (freq[w] || 0) + 1;
+        }
+      });
+    });
 
-    fullText.innerHTML = res.analyzed.map(item => {
-      const isKept = res.kept.includes(item.sentence);
-      const opacity = isKept ? 1 : Math.max(0.35, 0.35 + item.score * 0.3);
-      const title = `score: ${item.score.toFixed(2)} — ${item.reasons.join(', ')}`;
-      return isKept
-        ? `<mark title="${title}">${item.sentence}</mark>`
-        : `<span title="${title}" style="opacity:${opacity.toFixed(2)}">${item.sentence}</span>`;
-    }).join(' ');
+    const raw = sentences.map((sentence, i) => {
+      const tokens = tokenLists[i];
+      const contentTokens = tokens.filter(w => !STOPWORDS.has(w) && w.length > 2);
+      let keywordScore = 0;
+      contentTokens.forEach(w => { keywordScore += (freq[w] || 0); });
+      const lengthNorm = Math.max(contentTokens.length, 1);
+      let score = keywordScore / lengthNorm;
 
-    const actualPct = res.totalWords ? Math.round((res.summaryWords / res.totalWords) * 100) : 0;
-    compressionLine.innerHTML = `<b>${res.totalWords}</b> words → <b>${res.summaryWords}</b> words <b>(${actualPct}%</b> of original)`;
+      // length balance: discount very short or very long sentences
+      const wc = tokens.length;
+      if(wc < 4) score *= 0.5;
+      else if(wc > 40) score *= 0.7;
 
-    stats.innerHTML = `<span>${res.kept.length} of ${res.all.length} sentences kept</span>`;
+      // signal phrases: numbers, dates, action words
+      let signalHits = 0;
+      tokens.forEach(w => {
+        if(ACTION_WORDS.has(w)) signalHits++;
+        if(/^\d+([:.,]\d+)?%?$/.test(w)) signalHits++;
+      });
+      if(MONTHS.test(sentence)) signalHits++;
+      score += signalHits * (score > 0 ? score * 0.15 : 0.4);
 
-    result.classList.add('show');
-    goBtn.disabled = false;
-    goBtn.textContent = 'Distill';
-    copyBtn.textContent = 'Copy summary';
-    copyBtn.classList.remove('copied','failed');
-  }, 450);
-});
+      // positional bonus for first/last sentence
+      if(i === 0 || i === sentences.length - 1) score *= 1.25;
 
-clearBtn.addEventListener('click', () => {
-  input.value = '';
-  updateWordCount();
-  result.classList.remove('show');
-  inlineMsg.classList.remove('show');
-  input.focus();
-});
+      return score;
+    });
 
-toggleView.addEventListener('click', () => {
-  const showingFull = fullText.classList.toggle('show');
-  output.style.display = showingFull ? 'none' : 'block';
-  toggleView.textContent = showingFull ? 'show summary only' : 'show inside the original';
-});
+    const max = Math.max(...raw, 0.0001);
+    return raw.map(s => s / max);
+  }
 
-copyBtn.addEventListener('click', () => {
-  if(!lastResult) return;
-  navigator.clipboard.writeText(lastResult.summary).then(() => {
-    copyBtn.textContent = 'Copied!';
-    copyBtn.classList.remove('failed');
-    copyBtn.classList.add('copied');
-    setTimeout(() => { copyBtn.textContent = 'Copy summary'; copyBtn.classList.remove('copied'); }, 1600);
-  }).catch(() => {
-    copyBtn.textContent = "Couldn't copy — select manually";
-    copyBtn.classList.remove('copied');
-    copyBtn.classList.add('failed');
-    setTimeout(() => { copyBtn.textContent = 'Copy summary'; copyBtn.classList.remove('failed'); }, 2200);
+  function runDistill(){
+    const text = input.value;
+    const sentences = splitSentences(text);
+
+    if(sentences.length === 0){
+      output.innerHTML = '<span class="empty">Paste some text on the left, then press Distill.</span>';
+      keptCount.textContent = "—";
+      stats.innerHTML = '<span class="error-note">There\'s nothing to distill yet.</span>';
+      copyBtn.disabled = true;
+      lastSummary = "";
+      resetFeedback(true);
+      return;
+    }
+
+    if(sentences.length < 3){
+      stats.innerHTML = '<span class="error-note">This text is quite short — Distill works best on a few sentences or more.</span>';
+    }
+
+    const scores = scoreSentences(sentences);
+    const targetPct = Number(pct.value) / 100;
+    const keepN = Math.max(1, Math.round(sentences.length * targetPct));
+
+    const ranked = scores
+      .map((score, idx) => ({ score, idx }))
+      .sort((a, b) => b.score - a.score)
+      .slice(0, keepN)
+      .map(x => x.idx)
+      .sort((a, b) => a - b);
+
+    const keptSet = new Set(ranked);
+
+    output.innerHTML = sentences.map((s, i) => {
+      const isKept = keptSet.has(i);
+      const opacity = isKept ? 1 : Math.max(0.28, 0.28 + scores[i] * 0.35);
+      const cls = isKept ? 'kept' : 'faded';
+      const style = isKept ? '' : ` style="opacity:${opacity.toFixed(2)}"`;
+      return `<span class="${cls}"${style}>${escapeHTML(s)}</span> `;
+    }).join('');
+
+    lastSummary = ranked.map(i => sentences[i]).join(' ');
+
+    const originalWords = text.trim().split(/\s+/).filter(Boolean).length;
+    const summaryWords = lastSummary.split(/\s+/).filter(Boolean).length;
+    const compression = originalWords ? Math.round((summaryWords / originalWords) * 100) : 0;
+
+    keptCount.textContent = `${ranked.length} of ${sentences.length} sentences`;
+    if(sentences.length >= 3 || stats.querySelector('.error-note') === null){
+      stats.innerHTML = `<span><b>${originalWords}</b> words in → <b>${summaryWords}</b> words out</span><span><b>${compression}%</b> of the original</span>`;
+    }
+    copyBtn.disabled = ranked.length === 0;
+    resetFeedback(ranked.length === 0);
+  }
+
+  function escapeHTML(str){
+    return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  }
+
+  function loadSample(key){
+    input.value = SAMPLES[key];
+    updateWordCount();
+    runDistill();
+    input.scrollTop = 0;
+  }
+
+  // ---- events ----
+  input.addEventListener('input', updateWordCount);
+
+  distillBtn.addEventListener('click', runDistill);
+
+  pct.addEventListener('input', () => {
+    pctLabel.textContent = pct.value + '%';
+    pct.style.setProperty('--fill', ((pct.value - pct.min) / (pct.max - pct.min) * 100) + '%');
+    if(lastSummary) runDistill();
   });
-});
+  pct.style.setProperty('--fill', ((pct.value - pct.min) / (pct.max - pct.min) * 100) + '%');
 
-input.addEventListener('keydown', (e) => {
-  if((e.ctrlKey || e.metaKey) && e.key === 'Enter') goBtn.click();
-});
+  clearBtn.addEventListener('click', () => {
+    input.value = "";
+    output.innerHTML = '<span class="empty">The distilled sentences will highlight here, inside your original text.</span>';
+    keptCount.textContent = "—";
+    stats.innerHTML = "";
+    copyBtn.disabled = true;
+    lastSummary = "";
+    resetFeedback(true);
+    updateWordCount();
+    input.focus();
+  });
 
-function showDropError(msg){
-  dropzone.textContent = msg;
-  dropzone.classList.add('error');
-  setTimeout(() => {
-    dropzone.textContent = 'Drop a .txt file here, or click to browse';
-    dropzone.classList.remove('error');
-  }, 2500);
-}
+  copyBtn.addEventListener('click', () => {
+    if(!lastSummary) return;
+    navigator.clipboard.writeText(lastSummary).then(() => {
+      const original = copyBtn.textContent;
+      copyBtn.textContent = "Copied!";
+      copyBtn.classList.add('toast');
+      setTimeout(() => {
+        copyBtn.textContent = original;
+        copyBtn.classList.remove('toast');
+      }, 1600);
+    }).catch(() => {
+      stats.innerHTML = '<span class="error-note">Couldn\'t copy automatically — select the highlighted text manually.</span>';
+    });
+  });
 
-function loadFile(file){
-  if(!file) return;
-  if(!file.name.toLowerCase().endsWith('.txt')){
-    showDropError('Only .txt files are supported.');
-    return;
-  }
-  const reader = new FileReader();
-  reader.onload = (e) => { input.value = e.target.result; updateWordCount(); };
-  reader.onerror = () => showDropError('Could not read that file.');
-  reader.readAsText(file);
-}
-dropzone.addEventListener('click', () => fileInput.click());
-dropzone.addEventListener('keydown', (e) => {
-  if(e.key === 'Enter' || e.key === ' '){ e.preventDefault(); fileInput.click(); }
-});
-fileInput.addEventListener('change', (e) => loadFile(e.target.files[0]));
-dropzone.addEventListener('dragover', (e) => { e.preventDefault(); dropzone.classList.add('drag'); });
-dropzone.addEventListener('dragleave', () => dropzone.classList.remove('drag'));
-dropzone.addEventListener('drop', (e) => {
-  e.preventDefault();
-  dropzone.classList.remove('drag');
-  loadFile(e.dataTransfer.files[0]);
-});
+  fbUp.addEventListener('click', () => {
+    fbUp.classList.add('chosen');
+    fbDown.classList.remove('chosen');
+    fbMore.hidden = true;
+    fbThanks.hidden = false;
+  });
+
+  fbDown.addEventListener('click', () => {
+    fbDown.classList.add('chosen');
+    fbUp.classList.remove('chosen');
+    fbThanks.hidden = true;
+    fbMore.hidden = false;
+    fbText.focus();
+  });
+
+  fbSend.addEventListener('click', () => {
+    const comment = fbText.value.trim();
+    if(!comment){
+      fbText.focus();
+      return;
+    }
+    const title = encodeURIComponent('Feedback: distillation quality');
+    const body = encodeURIComponent(
+      "What didn't work well:\n" + comment +
+      "\n\n(Submitted from the feedback widget — original text intentionally not included.)"
+    );
+    window.open(`https://github.com/distillapp/Distill/issues/new?title=${title}&body=${body}`, '_blank', 'noopener');
+    fbMore.hidden = true;
+    fbThanks.hidden = false;
+    fbThanks.textContent = "Thanks — opening GitHub in a new tab.";
+  });
+
+  document.querySelectorAll('.chip[data-sample]').forEach(btn => {
+    btn.addEventListener('click', () => loadSample(btn.dataset.sample));
+  });
+
+  // drag & drop
+  ['dragenter','dragover'].forEach(evt => {
+    dropzone.addEventListener(evt, e => {
+      e.preventDefault();
+      dropzone.classList.add('dragging');
+    });
+  });
+  ['dragleave','drop'].forEach(evt => {
+    dropzone.addEventListener(evt, e => {
+      e.preventDefault();
+      dropzone.classList.remove('dragging');
+    });
+  });
+  dropzone.addEventListener('drop', e => {
+    const file = e.dataTransfer.files[0];
+    if(!file) return;
+    if(!file.name.toLowerCase().endsWith('.txt') && file.type !== 'text/plain'){
+      stats.innerHTML = '<span class="error-note">Distill only reads plain .txt files right now — try pasting the text instead.</span>';
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = () => {
+      input.value = reader.result;
+      updateWordCount();
+      runDistill();
+    };
+    reader.onerror = () => {
+      stats.innerHTML = '<span class="error-note">That file couldn\'t be read. Try pasting the text instead.</span>';
+    };
+    reader.readAsText(file);
+  });
+
+  // keyboard shortcut: cmd/ctrl + enter to distill
+  input.addEventListener('keydown', e => {
+    if((e.metaKey || e.ctrlKey) && e.key === 'Enter'){
+      e.preventDefault();
+      runDistill();
+    }
+  });
+
+  updateWordCount();
+})();
 </script>
 </body>
 </html>
