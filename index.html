@@ -4,6 +4,12 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Distill — the essence of any text</title>
+<meta name="description" content="A browser-based tool that extracts the sentences carrying real meaning from any email, article, or notes — no AI rewriting, nothing uploaded, entirely private.">
+<meta property="og:title" content="Distill — the essence of any text">
+<meta property="og:description" content="Paste an email or article. Distill keeps the sentences that matter — including buried asks and deadlines — and lets the rest fade.">
+<meta property="og:type" content="website">
+<meta name="twitter:card" content="summary">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Crect width='24' height='24' fill='%230F211A'/%3E%3Cpath d='M9 2H15V7.5L19.5 16C20.3 17.5 19.2 19.3 17.5 19.3H6.5C4.8 19.3 3.7 17.5 4.5 16L9 7.5V2Z' stroke='%23C98A4B' stroke-width='1.5'/%3E%3Ccircle cx='12' cy='10.5' r='1' fill='%23D7E8DD'/%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;1,9..144,500&family=Work+Sans:wght@400;500;600&display=swap" rel="stylesheet">
@@ -38,6 +44,26 @@
   .v2{ width:420px; height:420px; background:var(--vapor); bottom:-160px; right:-100px; animation:drift2 32s ease-in-out infinite; }
   @keyframes drift1{ 0%,100%{ transform:translate(0,0); } 50%{ transform:translate(40px,60px); } }
   @keyframes drift2{ 0%,100%{ transform:translate(0,0); } 50%{ transform:translate(-30px,-50px); } }
+
+  @media (prefers-reduced-motion: reduce){
+    .v1, .v2{ animation:none; }
+    *{ scroll-behavior:auto !important; transition-duration:0.01ms !important; }
+  }
+
+  :focus-visible{
+    outline:2px solid var(--copper);
+    outline-offset:2px;
+    border-radius:2px;
+  }
+  a{ color:var(--copper); }
+
+  footer{
+    position:relative; z-index:1;
+    max-width:720px; margin:0 auto;
+    padding:0 24px 48px;
+    font-size:12.5px; color:var(--ink-faint);
+    display:flex; justify-content:space-between; flex-wrap:wrap; gap:10px;
+  }
 
   .wrap{ position:relative; z-index:1; max-width:720px; margin:0 auto; padding:72px 24px 100px; }
 
@@ -140,6 +166,7 @@
   .btn-primary{ background:var(--copper); color:#1A1108; font-weight:600; padding:10px 22px; }
   .btn-primary:hover{ background:#D89A5E; }
   .btn-primary:disabled{ background:var(--fade); color:var(--ink-faint); cursor:default; }
+  button:active:not(:disabled){ transform:translateY(1px); }
 
   .inline-msg{ font-size:12.5px; color:var(--error); margin-top:10px; display:none; }
   .inline-msg.show{ display:block; }
@@ -187,9 +214,9 @@
 </head>
 <body>
 
-<div class="vapor-field"><span class="v1"></span><span class="v2"></span></div>
+<div class="vapor-field" aria-hidden="true"><span class="v1"></span><span class="v2"></span></div>
 
-<div class="wrap">
+<main class="wrap">
 
   <div class="brand">
     <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -225,7 +252,7 @@
     <textarea id="input" placeholder="Paste an email, article, or notes here, or drop a .txt file below..."></textarea>
 
     <div class="row-under-textarea">
-      <div class="dropzone" id="dropzone">Drop a .txt file here, or click to browse</div>
+      <div class="dropzone" id="dropzone" role="button" tabindex="0" aria-label="Upload a text file">Drop a .txt file here, or click to browse</div>
       <button class="sample-btn" id="sampleBtn">Try a sample email</button>
     </div>
     <input type="file" id="fileInput" accept=".txt" style="display:none">
@@ -243,7 +270,7 @@
     </div>
     <div class="inline-msg" id="inlineMsg">Paste or type some text first.</div>
 
-    <div class="result" id="result">
+    <div class="result" id="result" role="status" aria-live="polite">
       <div class="result-inner">
         <div class="result-label">
           <span class="tag">The distillation</span>
@@ -262,7 +289,12 @@
 
   <p class="note">Sentences are scored on four signals: repeated important words, dates/times/deadlines, request phrasing ("please," "could you," "by Friday"), and position (opening and closing sentences often carry context or the actual ask). Hover any sentence in "show inside the original" to see why it scored the way it did.</p>
 
-</div>
+</main>
+
+<footer>
+  <span>Distill — built while learning Python</span>
+  <span>No tracking, no accounts, no data leaves your browser</span>
+</footer>
 
 <script>
 const STOPWORDS = new Set("a an the is are was were be been being of in on at to for with and or but if then so as by from this that these those it its he she they we you i not no yes do does did have has had will would can could should may might".split(" "));
@@ -463,6 +495,9 @@ function loadFile(file){
   reader.readAsText(file);
 }
 dropzone.addEventListener('click', () => fileInput.click());
+dropzone.addEventListener('keydown', (e) => {
+  if(e.key === 'Enter' || e.key === ' '){ e.preventDefault(); fileInput.click(); }
+});
 fileInput.addEventListener('change', (e) => loadFile(e.target.files[0]));
 dropzone.addEventListener('dragover', (e) => { e.preventDefault(); dropzone.classList.add('drag'); });
 dropzone.addEventListener('dragleave', () => dropzone.classList.remove('drag'));
