@@ -11,7 +11,6 @@
   :root{
     --bg-deep:#0F211A;
     --bg-panel:#16281F;
-    --bg-panel-2:#1B3327;
     --line:#2A4436;
     --line-soft:#213A2C;
     --ink:#EFEADC;
@@ -21,6 +20,7 @@
     --copper-soft:#8E6134;
     --vapor:#D7E8DD;
     --fade:#3A4E42;
+    --error:#C97A6B;
   }
   *{box-sizing:border-box;}
   html{ scroll-behavior:smooth; }
@@ -32,16 +32,8 @@
     -webkit-font-smoothing:antialiased;
   }
 
-  /* ambient background: a slow drifting vapor glow, one orchestrated moment */
-  .vapor-field{
-    position:fixed; inset:0; overflow:hidden; z-index:0; pointer-events:none;
-  }
-  .vapor-field span{
-    position:absolute;
-    border-radius:50%;
-    filter:blur(60px);
-    opacity:0.16;
-  }
+  .vapor-field{ position:fixed; inset:0; overflow:hidden; z-index:0; pointer-events:none; }
+  .vapor-field span{ position:absolute; border-radius:50%; filter:blur(60px); opacity:0.16; }
   .v1{ width:520px; height:520px; background:var(--copper); top:-180px; left:-120px; animation:drift1 26s ease-in-out infinite; }
   .v2{ width:420px; height:420px; background:var(--vapor); bottom:-160px; right:-100px; animation:drift2 32s ease-in-out infinite; }
   @keyframes drift1{ 0%,100%{ transform:translate(0,0); } 50%{ transform:translate(40px,60px); } }
@@ -49,10 +41,9 @@
 
   .wrap{ position:relative; z-index:1; max-width:720px; margin:0 auto; padding:72px 24px 100px; }
 
-  /* mark + wordmark */
   .brand{ display:flex; align-items:center; gap:10px; margin-bottom:64px; }
   .brand svg{ width:22px; height:22px; }
-  .brand span{ font-family:'Fraunces', serif; font-size:17px; letter-spacing:0.01em; color:var(--ink); }
+  .brand span{ font-family:'Fraunces', serif; font-size:17px; color:var(--ink); }
 
   header{ margin-bottom:48px; }
   h1{
@@ -65,29 +56,34 @@
     max-width:15ch;
     color:var(--ink);
   }
-  p.lede{
-    font-size:16px;
-    line-height:1.65;
-    color:var(--ink-soft);
-    max-width:46ch;
-    margin:0;
-  }
+  p.lede{ font-size:16px; line-height:1.65; color:var(--ink-soft); max-width:46ch; margin:0 0 8px 0; }
+  p.privacy-line{ font-size:13px; color:var(--ink-faint); display:flex; align-items:center; gap:6px; }
+  p.privacy-line svg{ width:13px; height:13px; flex-shrink:0; }
 
-  /* panel */
   .panel{
     background:var(--bg-panel);
     border:1px solid var(--line-soft);
     border-radius:6px;
     padding:28px;
   }
-  .field-label{
-    font-size:13px;
-    color:var(--ink-faint);
-    margin-bottom:10px;
-    display:flex;
-    justify-content:space-between;
+
+  .field-label{ display:flex; align-items:center; justify-content:space-between; margin-bottom:10px; flex-wrap:wrap; gap:8px; }
+  .field-label-left{ display:flex; align-items:center; gap:8px; }
+  .field-label span.name{ font-size:13px; color:var(--ink-faint); }
+  .info-toggle{
+    background:none; border:1px solid var(--line); color:var(--ink-faint);
+    font-size:11px; border-radius:20px; padding:2px 9px; cursor:pointer;
   }
-  .field-label .count{ color:var(--ink-faint); font-variant-numeric:tabular-nums; }
+  .info-toggle:hover{ color:var(--ink-soft); border-color:var(--ink-faint); }
+  .info-toggle.active{ color:var(--copper); border-color:var(--copper-soft); }
+  .count{ color:var(--ink-faint); font-size:13px; font-variant-numeric:tabular-nums; }
+
+  .info-panel{
+    max-height:0; overflow:hidden; transition:max-height 0.3s ease, margin 0.3s ease;
+    font-size:13px; line-height:1.6; color:var(--ink-soft);
+    background:var(--bg-deep); border-radius:4px;
+  }
+  .info-panel.show{ max-height:200px; margin-bottom:14px; padding:12px 14px; border:1px solid var(--line-soft); }
 
   textarea{
     width:100%;
@@ -105,8 +101,10 @@
   textarea::placeholder{ color:var(--ink-faint); }
   textarea:focus{ outline:none; border-color:var(--copper-soft); }
 
+  .row-under-textarea{ display:flex; gap:10px; margin-top:10px; flex-wrap:wrap; }
   .dropzone{
-    margin-top:10px;
+    flex:1;
+    min-width:180px;
     border:1px dashed var(--line);
     border-radius:4px;
     padding:10px 14px;
@@ -114,8 +112,16 @@
     color:var(--ink-faint);
     text-align:center;
     transition:border-color 0.15s, color 0.15s;
+    cursor:pointer;
   }
   .dropzone.drag{ border-color:var(--copper); color:var(--copper); }
+  .dropzone.error{ border-color:var(--error); color:var(--error); }
+
+  .sample-btn{
+    background:none; border:1px solid var(--line); color:var(--ink-soft);
+    font-size:12.5px; padding:0 16px; border-radius:4px; cursor:pointer; white-space:nowrap;
+  }
+  .sample-btn:hover{ border-color:var(--ink-faint); color:var(--ink); }
 
   .controls{
     display:flex;
@@ -125,88 +131,57 @@
     margin-top:20px;
     flex-wrap:wrap;
   }
-  .slider-group{ display:flex; align-items:center; gap:10px; font-size:13px; color:var(--ink-soft); }
-  input[type=range]{
-    accent-color:var(--copper);
-    width:110px;
-  }
+  .slider-group{ display:flex; align-items:center; gap:10px; font-size:13px; color:var(--ink-soft); flex:1; min-width:200px; }
+  input[type=range]{ accent-color:var(--copper); flex:1; min-width:90px; max-width:150px; }
   .btn-row{ display:flex; gap:10px; }
   button{ font-family:'Work Sans', sans-serif; font-size:14px; cursor:pointer; border-radius:4px; border:1px solid transparent; }
-  .btn-ghost{
-    background:transparent;
-    color:var(--ink-soft);
-    border-color:var(--line);
-    padding:10px 16px;
-  }
+  .btn-ghost{ background:transparent; color:var(--ink-soft); border-color:var(--line); padding:10px 16px; }
   .btn-ghost:hover{ color:var(--ink); border-color:var(--ink-faint); }
-  .btn-primary{
-    background:var(--copper);
-    color:#1A1108;
-    font-weight:600;
-    padding:10px 22px;
-  }
+  .btn-primary{ background:var(--copper); color:#1A1108; font-weight:600; padding:10px 22px; }
   .btn-primary:hover{ background:#D89A5E; }
   .btn-primary:disabled{ background:var(--fade); color:var(--ink-faint); cursor:default; }
 
-  /* result */
-  .result{
-    margin-top:0;
-    max-height:0;
-    overflow:hidden;
-    transition:max-height 0.5s ease, margin-top 0.5s ease;
-  }
-  .result.show{ margin-top:28px; max-height:1400px; }
-  .result-inner{
-    padding-top:24px;
-    border-top:1px solid var(--line-soft);
-  }
-  .result-label{ display:flex; justify-content:space-between; align-items:center; margin-bottom:14px; }
+  .inline-msg{ font-size:12.5px; color:var(--error); margin-top:10px; display:none; }
+  .inline-msg.show{ display:block; }
+
+  .result{ margin-top:0; max-height:0; overflow:hidden; transition:max-height 0.5s ease, margin-top 0.5s ease; }
+  .result.show{ margin-top:28px; max-height:1600px; }
+  .result-inner{ padding-top:24px; border-top:1px solid var(--line-soft); }
+  .result-label{ display:flex; justify-content:space-between; align-items:center; margin-bottom:6px; flex-wrap:wrap; gap:8px; }
   .result-label .tag{ font-size:13px; color:var(--copper); }
-  .toggle-view{ font-size:12.5px; color:var(--ink-faint); background:none; border:none; text-decoration:underline; text-underline-offset:2px; padding:0; }
+  .toggle-view{ font-size:12.5px; color:var(--ink-faint); background:none; border:none; text-decoration:underline; text-underline-offset:2px; padding:0; cursor:pointer; }
   .toggle-view:hover{ color:var(--ink-soft); }
+
+  .compression-line{ font-size:12.5px; color:var(--ink-faint); margin-bottom:16px; }
+  .compression-line b{ color:var(--vapor); font-weight:500; }
 
   .summary-text{ font-size:16.5px; line-height:1.75; color:var(--ink); }
 
   .full-text{ font-size:15px; line-height:1.8; color:var(--ink-faint); display:none; }
   .full-text.show{ display:block; }
-  .full-text mark{
-    background:none;
-    color:var(--vapor);
-    font-weight:500;
-    border-bottom:1px solid var(--copper-soft);
-  }
+  .full-text mark{ background:none; color:var(--vapor); font-weight:500; cursor:help; }
 
-  .stats{
-    margin-top:20px;
-    display:flex;
-    gap:20px;
-    font-size:12.5px;
-    color:var(--ink-faint);
-  }
+  .stats{ margin-top:20px; display:flex; gap:20px; font-size:12.5px; color:var(--ink-faint); flex-wrap:wrap; }
 
-  .actions{ display:flex; gap:10px; margin-top:18px; }
-  .btn-small{
-    background:none;
-    border:1px solid var(--line);
-    color:var(--ink-soft);
-    font-size:12.5px;
-    padding:7px 13px;
-  }
+  .actions{ display:flex; gap:10px; margin-top:18px; flex-wrap:wrap; }
+  .btn-small{ background:none; border:1px solid var(--line); color:var(--ink-soft); font-size:12.5px; padding:7px 13px; }
   .btn-small:hover{ border-color:var(--ink-faint); color:var(--ink); }
   .btn-small.copied{ border-color:var(--copper); color:var(--copper); }
+  .btn-small.failed{ border-color:var(--error); color:var(--error); }
 
-  .note{
-    margin-top:44px;
-    font-size:13px;
-    color:var(--ink-faint);
-    line-height:1.7;
-    max-width:52ch;
-  }
+  .note{ margin-top:44px; font-size:13px; color:var(--ink-faint); line-height:1.7; max-width:52ch; }
 
   @media (max-width:520px){
-    .wrap{ padding:48px 18px 80px; }
-    h1{ font-size:32px; }
-    .panel{ padding:20px; }
+    .wrap{ padding:48px 16px 80px; }
+    h1{ font-size:30px; }
+    .panel{ padding:18px; }
+    .controls{ flex-direction:column; align-items:stretch; }
+    .slider-group{ max-width:none; }
+    input[type=range]{ max-width:none; }
+    .btn-row{ width:100%; }
+    .btn-row button{ flex:1; }
+    .row-under-textarea{ flex-direction:column; }
+    .sample-btn{ padding:10px; }
   }
 </style>
 </head>
@@ -227,30 +202,46 @@
 
   <header>
     <h1>What's left when everything unnecessary boils away.</h1>
-    <p class="lede">Paste an article, essay, or set of notes. Distill keeps the sentences carrying the meaning, and lets everything else fade — nothing generated, nothing invented.</p>
+    <p class="lede">Paste an email, article, or set of notes. Distill keeps the sentences carrying the meaning — including buried asks and deadlines — and lets the rest fade.</p>
+    <p class="privacy-line">
+      <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 2L4 5.5V11C4 16 7.5 20.5 12 22C16.5 20.5 20 16 20 11V5.5L12 2Z" stroke="#5C7166" stroke-width="1.4"/></svg>
+      Runs fully in your browser — nothing is ever uploaded or sent anywhere.
+    </p>
   </header>
 
   <div class="panel">
     <div class="field-label">
-      <span>Your text</span>
+      <div class="field-label-left">
+        <span class="name">Your text</span>
+        <button class="info-toggle" id="infoToggle">ⓘ extractive, not AI</button>
+      </div>
       <span class="count" id="wordCount">0 words</span>
     </div>
-    <textarea id="input" placeholder="Paste something here, or drop a .txt file below..."></textarea>
 
-    <div class="dropzone" id="dropzone">Drop a .txt file here, or click to browse</div>
+    <div class="info-panel" id="infoPanel">
+      Distill is <b style="color:var(--ink)">extractive</b> — it selects your highest-scoring original sentences as-is. It doesn't rewrite, paraphrase, or generate new text like an AI chatbot would. What you get back is always word-for-word from what you pasted.
+    </div>
+
+    <textarea id="input" placeholder="Paste an email, article, or notes here, or drop a .txt file below..."></textarea>
+
+    <div class="row-under-textarea">
+      <div class="dropzone" id="dropzone">Drop a .txt file here, or click to browse</div>
+      <button class="sample-btn" id="sampleBtn">Try a sample email</button>
+    </div>
     <input type="file" id="fileInput" accept=".txt" style="display:none">
 
     <div class="controls">
       <div class="slider-group">
-        <span>Sentences to keep</span>
-        <input type="range" id="count" min="1" max="8" value="3">
-        <span id="countVal">3</span>
+        <span>Target length</span>
+        <input type="range" id="targetSlider" min="10" max="50" step="5" value="25">
+        <span id="targetVal">25%</span>
       </div>
       <div class="btn-row">
         <button class="btn-ghost" id="clearBtn">Clear</button>
         <button class="btn-primary" id="go">Distill</button>
       </div>
     </div>
+    <div class="inline-msg" id="inlineMsg">Paste or type some text first.</div>
 
     <div class="result" id="result">
       <div class="result-inner">
@@ -258,6 +249,7 @@
           <span class="tag">The distillation</span>
           <button class="toggle-view" id="toggleView">show inside the original</button>
         </div>
+        <div class="compression-line" id="compressionLine"></div>
         <div class="summary-text" id="output"></div>
         <div class="full-text" id="fullText"></div>
         <div class="stats" id="stats"></div>
@@ -268,91 +260,152 @@
     </div>
   </div>
 
-  <p class="note">This runs entirely in your browser — nothing is uploaded anywhere. It scores each sentence by how many important, frequently-repeated words it carries, then keeps the highest-scoring ones in their original order.</p>
+  <p class="note">Sentences are scored on four signals: repeated important words, dates/times/deadlines, request phrasing ("please," "could you," "by Friday"), and position (opening and closing sentences often carry context or the actual ask). Hover any sentence in "show inside the original" to see why it scored the way it did.</p>
 
 </div>
 
 <script>
 const STOPWORDS = new Set("a an the is are was were be been being of in on at to for with and or but if then so as by from this that these those it its he she they we you i not no yes do does did have has had will would can could should may might".split(" "));
+const DATE_RE = /\b(mon|tue|wed|thu|fri|sat|sun)(day)?\b|\b(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[a-z]*\b|\btoday\b|\btomorrow\b|\btonight\b|\bnoon\b|\bmidnight\b|\b\d{1,2}(:\d{2})?\s?(am|pm)\b|\bdeadline\b|\bdue\b|\bend of (the )?(day|week)\b|\beod\b|\bcob\b|\basap\b/i;
+const REQUEST_RE = /\b(please|could you|can you|would you|need to|needs to|must|should|kindly|let me know|required|reminder|make sure|don'?t forget|remember to)\b/i;
+
+const SAMPLE_EMAIL = "Hi team, Hope you're all doing well and had a nice weekend. Just wanted to check in on a few things before we wrap up the week. Also, thanks again for the great work on the client presentation last week, it really landed well and the client seemed impressed overall. On a related note, I wanted to loop back about the budget doc since a few people mentioned they hadn't had a chance to look yet. Could you please send me the finalized budget numbers by Thursday at 5pm so I can include them in Monday's report? No rush on anything else, just wanted to flag that one before the week ends. Thanks so much, and enjoy the rest of your week!";
 
 function splitSentences(text){
   return text.trim().split(/(?<=[.!?])\s+/).map(s => s.trim()).filter(Boolean);
 }
 
-function distill(text, n){
+function analyzeSentence(sentence, freq, index, total){
+  const wordsRaw = sentence.match(/\w+/g) || [];
+  const wordsLower = wordsRaw.map(w => w.toLowerCase());
+  const freqScore = wordsLower.length ? wordsLower.reduce((s,w) => s+(freq[w]||0),0)/wordsLower.length : 0;
+  const numberSignal = (/\d/.test(sentence) || DATE_RE.test(sentence)) ? 1 : 0;
+  const requestSignal = REQUEST_RE.test(sentence) ? 1 : 0;
+  const positionSignal = (index === 0 || index === total - 1) ? 1 : 0;
+  const score = (freqScore * 0.45) + (numberSignal * 0.25) + (requestSignal * 0.35) + (positionSignal * 0.15);
+
+  const reasons = [];
+  if(requestSignal) reasons.push('contains a request');
+  if(numberSignal) reasons.push('contains a date/number');
+  if(positionSignal) reasons.push(index === 0 ? 'opening sentence' : 'closing sentence');
+  if(freqScore > 0.3) reasons.push('repeats key terms');
+  if(!reasons.length) reasons.push('low relevance');
+
+  return { sentence, score, reasons };
+}
+
+function distill(text, targetPercent){
   const sentences = splitSentences(text);
-  if(sentences.length <= n){
-    return { summary: text, kept: sentences, all: sentences };
+  const totalWords = (text.match(/\w+/g) || []).length;
+
+  if(sentences.length <= 1){
+    return { summary: text, kept: sentences, all: sentences, analyzed: sentences.map(s=>({sentence:s,score:1,reasons:['entire text']})), totalWords, summaryWords: totalWords };
   }
+
   const words = (text.toLowerCase().match(/\w+/g) || []).filter(w => !STOPWORDS.has(w) && w.length > 2);
   const freq = {};
-  words.forEach(w => freq[w] = (freq[w]||0) + 1);
+  words.forEach(w => freq[w] = (freq[w]||0)+1);
   const max = Math.max(...Object.values(freq), 1);
-  Object.keys(freq).forEach(w => freq[w] = freq[w] / max);
+  Object.keys(freq).forEach(w => freq[w] = freq[w]/max);
 
-  const scored = sentences.map(s => {
-    const w = (s.toLowerCase().match(/\w+/g) || []);
-    const score = w.length ? w.reduce((sum, word) => sum + (freq[word]||0), 0) / w.length : 0;
-    return { sentence: s, score };
-  });
+  const analyzed = sentences.map((s,i) => analyzeSentence(s, freq, i, sentences.length));
+  const targetWords = Math.max(6, Math.round(totalWords * targetPercent/100));
 
-  const top = [...scored].sort((a,b) => b.score - a.score).slice(0, n).map(x => x.sentence);
-  const ordered = sentences.filter(s => top.includes(s));
+  const ranked = [...analyzed].sort((a,b) => b.score - a.score);
+  const kept = [];
+  let acc = 0;
+  for(const item of ranked){
+    if(acc >= targetWords && kept.length >= 1) break;
+    kept.push(item);
+    acc += (item.sentence.match(/\w+/g) || []).length;
+  }
+  const keptSet = new Set(kept.map(k => k.sentence));
+  const orderedKept = sentences.filter(s => keptSet.has(s));
+  const summary = orderedKept.join(' ');
+  const summaryWords = (summary.match(/\w+/g)||[]).length;
 
-  return { summary: ordered.join(" "), kept: ordered, all: sentences };
+  return { summary, kept: orderedKept, all: sentences, analyzed, totalWords, summaryWords };
 }
 
 const input = document.getElementById('input');
 const wordCount = document.getElementById('wordCount');
-const countSlider = document.getElementById('count');
-const countVal = document.getElementById('countVal');
+const targetSlider = document.getElementById('targetSlider');
+const targetVal = document.getElementById('targetVal');
 const goBtn = document.getElementById('go');
 const clearBtn = document.getElementById('clearBtn');
 const result = document.getElementById('result');
 const output = document.getElementById('output');
 const fullText = document.getElementById('fullText');
 const stats = document.getElementById('stats');
+const compressionLine = document.getElementById('compressionLine');
 const toggleView = document.getElementById('toggleView');
 const copyBtn = document.getElementById('copyBtn');
 const dropzone = document.getElementById('dropzone');
 const fileInput = document.getElementById('fileInput');
+const sampleBtn = document.getElementById('sampleBtn');
+const inlineMsg = document.getElementById('inlineMsg');
+const infoToggle = document.getElementById('infoToggle');
+const infoPanel = document.getElementById('infoPanel');
 
 function updateWordCount(){
   const words = input.value.trim().split(/\s+/).filter(Boolean).length;
   wordCount.textContent = words + (words === 1 ? ' word' : ' words');
 }
-input.addEventListener('input', updateWordCount);
+input.addEventListener('input', () => { updateWordCount(); inlineMsg.classList.remove('show'); });
 updateWordCount();
 
-countSlider.addEventListener('input', () => countVal.textContent = countSlider.value);
+targetSlider.addEventListener('input', () => targetVal.textContent = targetSlider.value + '%');
+
+infoToggle.addEventListener('click', () => {
+  infoPanel.classList.toggle('show');
+  infoToggle.classList.toggle('active');
+});
+
+sampleBtn.addEventListener('click', () => {
+  input.value = SAMPLE_EMAIL;
+  updateWordCount();
+  input.focus();
+});
 
 let lastResult = null;
 
 goBtn.addEventListener('click', () => {
   const text = input.value.trim();
-  if(!text) return;
+  if(!text){
+    inlineMsg.classList.add('show');
+    return;
+  }
+  inlineMsg.classList.remove('show');
 
   goBtn.disabled = true;
   goBtn.textContent = 'Distilling…';
 
   setTimeout(() => {
-    const n = parseInt(countSlider.value, 10);
-    const res = distill(text, n);
+    const pct = parseInt(targetSlider.value, 10);
+    const res = distill(text, pct);
     lastResult = res;
 
     output.textContent = res.summary;
 
-    fullText.innerHTML = res.all.map(s =>
-      res.kept.includes(s) ? `<mark>${s}</mark>` : `<span style="opacity:0.55">${s}</span>`
-    ).join(' ');
+    fullText.innerHTML = res.analyzed.map(item => {
+      const isKept = res.kept.includes(item.sentence);
+      const opacity = isKept ? 1 : Math.max(0.35, 0.35 + item.score * 0.3);
+      const title = `score: ${item.score.toFixed(2)} — ${item.reasons.join(', ')}`;
+      return isKept
+        ? `<mark title="${title}">${item.sentence}</mark>`
+        : `<span title="${title}" style="opacity:${opacity.toFixed(2)}">${item.sentence}</span>`;
+    }).join(' ');
 
-    stats.innerHTML = `<span>${res.kept.length} of ${res.all.length} sentences kept</span><span>${text.split(/\s+/).length} words in original</span>`;
+    const actualPct = res.totalWords ? Math.round((res.summaryWords / res.totalWords) * 100) : 0;
+    compressionLine.innerHTML = `<b>${res.totalWords}</b> words → <b>${res.summaryWords}</b> words <b>(${actualPct}%</b> of original)`;
+
+    stats.innerHTML = `<span>${res.kept.length} of ${res.all.length} sentences kept</span>`;
 
     result.classList.add('show');
     goBtn.disabled = false;
     goBtn.textContent = 'Distill';
     copyBtn.textContent = 'Copy summary';
-    copyBtn.classList.remove('copied');
+    copyBtn.classList.remove('copied','failed');
   }, 450);
 });
 
@@ -360,6 +413,7 @@ clearBtn.addEventListener('click', () => {
   input.value = '';
   updateWordCount();
   result.classList.remove('show');
+  inlineMsg.classList.remove('show');
   input.focus();
 });
 
@@ -372,28 +426,40 @@ toggleView.addEventListener('click', () => {
 copyBtn.addEventListener('click', () => {
   if(!lastResult) return;
   navigator.clipboard.writeText(lastResult.summary).then(() => {
-    copyBtn.textContent = 'Copied';
+    copyBtn.textContent = 'Copied!';
+    copyBtn.classList.remove('failed');
     copyBtn.classList.add('copied');
-    setTimeout(() => {
-      copyBtn.textContent = 'Copy summary';
-      copyBtn.classList.remove('copied');
-    }, 1600);
+    setTimeout(() => { copyBtn.textContent = 'Copy summary'; copyBtn.classList.remove('copied'); }, 1600);
+  }).catch(() => {
+    copyBtn.textContent = "Couldn't copy — select manually";
+    copyBtn.classList.remove('copied');
+    copyBtn.classList.add('failed');
+    setTimeout(() => { copyBtn.textContent = 'Copy summary'; copyBtn.classList.remove('failed'); }, 2200);
   });
 });
 
-// keyboard shortcut
 input.addEventListener('keydown', (e) => {
   if((e.ctrlKey || e.metaKey) && e.key === 'Enter') goBtn.click();
 });
 
-// file drop
+function showDropError(msg){
+  dropzone.textContent = msg;
+  dropzone.classList.add('error');
+  setTimeout(() => {
+    dropzone.textContent = 'Drop a .txt file here, or click to browse';
+    dropzone.classList.remove('error');
+  }, 2500);
+}
+
 function loadFile(file){
-  if(!file || !file.name.endsWith('.txt')) return;
+  if(!file) return;
+  if(!file.name.toLowerCase().endsWith('.txt')){
+    showDropError('Only .txt files are supported.');
+    return;
+  }
   const reader = new FileReader();
-  reader.onload = (e) => {
-    input.value = e.target.result;
-    updateWordCount();
-  };
+  reader.onload = (e) => { input.value = e.target.result; updateWordCount(); };
+  reader.onerror = () => showDropError('Could not read that file.');
   reader.readAsText(file);
 }
 dropzone.addEventListener('click', () => fileInput.click());
